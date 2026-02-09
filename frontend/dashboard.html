@@ -1,32 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Proactive Equipment Care</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Dashboard</title>
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <!-- External CSS -->
+    <link rel="stylesheet" href="dashboard.css">
 </head>
+
 <body>
-    <div class="dashboard-container">
-        <header>
-            <h1>Motor Failure Prediction Dashboard</h1>
-            <button onclick="logout()">Logout</button>
-        </header>
-        
-        <div class="tableau-embed">
-            <iframe src="YOUR_TABLEAU_DASHBOARD_URL" width="100%" height="800px" frameborder="0"></iframe>
-        </div>
-    </div>
-
-    <script>
-        if (!localStorage.getItem('userEmail')) {
-            window.location.href = 'login.html';
-        }
-
-        function logout() {
-            localStorage.removeItem('userEmail');
-            window.location.href = 'login.html';
-        }
-    </script>
+    <h1>Dashboard</h1>
 </body>
+
 </html>

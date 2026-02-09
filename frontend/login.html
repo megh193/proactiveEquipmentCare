@@ -1,49 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Proactive Equipment Care</title>
+    <title>Cloud Integrated Analytics - Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-    <div class="login-container">
-        <h1>Proactive Equipment Care</h1>
-        <h2>Login</h2>
-        <form id="loginForm">
-            <input type="email" id="email" placeholder="Email" required>
-            <input type="password" id="password" placeholder="Password" required>
-            <button type="submit">Login</button>
-        </form>
-        <div id="message"></div>
+
+    <img src="1.png" alt="Cloud Background" class="bg-image">
+
+    <div class="screen">
+        <div class="screen__background">
+            <span class="screen__background__shape shape1"></span>
+            <span class="screen__background__shape shape2"></span>
+        </div>
+
+        <div class="screen__content" id="loginContent">
+            <form class="login" id="loginForm">
+                <div class="he">Cloud Integrated Analytics</div>
+                <div class="sub-he">Proactive Equipment Care using Analytics with Cloud</div>
+
+                <div class="login__field">
+                    <i class="login__icon fas fa-user"></i>
+                    <input type="text" class="login__input" id="username" name="username" placeholder="Username (any)">
+                    <span class="error-message" id="usernameError">Username is required</span>
+                </div>
+
+                <div class="login__field">
+                    <i class="login__icon fas fa-lock"></i>
+                    <input type="password" class="login__input" id="password" name="password" placeholder="Password (any)">
+                    <span class="error-message" id="passwordError">Password is required</span>
+                </div>
+
+                <div class="login__footer">
+                    <button class="login__submit" type="submit" id="submitBtn">
+                        <span class="button__text">Login</span>
+                        <i class="button__icon fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
-    <script>
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            try {
-                const response = await fetch('http://localhost:5000/login', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({email, password})
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    localStorage.setItem('userEmail', email);
-                    window.location.href = 'dashboard.html';
-                } else {
-                    document.getElementById('message').textContent = data.message;
-                }
-            } catch (error) {
-                document.getElementById('message').textContent = 'Login failed';
-            }
-        });
-    </script>
+    <script src="script.js"></script>
+
 </body>
+
 </html>
