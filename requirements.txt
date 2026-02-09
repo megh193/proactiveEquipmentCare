@@ -1,0 +1,9 @@
+supabase==2.3.4
+python==3.11.9
+pandas==2.1.4
+numpy==1.26.3
+tensorflow==2.15.0
+scikit-learn==1.4.0
+python-dotenv==1.0.0
+flask==3.0.0
+flask-cors==4.0.0

@@ -1,0 +1,45 @@
+PROACTIVE EQUIPMENT CARE - PROJECT SUMMARY
+
+Project Overview:
+A predictive maintenance system for motor equipment using LSTM neural networks, 
+integrated with Supabase for data storage and Tableau for visualization.
+
+Key Components:
+1. Data Pipeline: Supabase storage to Python backend to Preprocessing
+2. ML Model: LSTM for time series failure prediction
+3. Dashboard: Tableau visualization with failure probability alerts
+4. Authentication: Login system with audit logging
+
+Technology Stack:
+- Backend: Python, Flask, TensorFlow/Keras
+- Database: Supabase (PostgreSQL)
+- Storage: Supabase Storage
+- Frontend: HTML, CSS, JavaScript
+- Visualization: Tableau Public
+- ML: LSTM (Long Short-Term Memory)
+
+Features:
+- Real-time motor failure prediction
+- User authentication and login tracking
+- Automated data pipeline from storage to predictions
+- Interactive dashboard with risk alerts
+- Enterprise-grade logging and monitoring
+
+Workflow:
+1. Raw motor data stored in Supabase
+2. Python scripts download and preprocess data
+3. LSTM model trained on historical data
+4. Predictions generated and exported to CSV
+5. Tableau dashboard displays failure probabilities
+6. Users access dashboard through authenticated login
+7. All access logged in database
+
+Setup Instructions:
+1. Configure .env file with Supabase credentials
+2. Install dependencies: pip install -r requirements.txt
+3. Run backend/download_raw_data.py to fetch data
+4. Execute Jupyter notebooks in sequence (01-05)
+5. Run backend/predict_and_export.py for predictions
+6. Upload CSV to Tableau and create dashboard
+7. Start Flask server: python backend/app.py
+8. Open frontend/login.html in browser
