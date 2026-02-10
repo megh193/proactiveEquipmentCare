@@ -2,8 +2,12 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from auth_service import authenticate_user, log_login
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../frontend', static_url_path='')
 CORS(app)
+
+@app.route('/')
+def index():
+    return app.send_static_file('login.html')
 
 @app.route('/login', methods=['POST'])
 def login():
