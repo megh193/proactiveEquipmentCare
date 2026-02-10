@@ -1,23 +1,23 @@
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
 
-    const usernameInput = document.getElementById('username');
+    const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
     const submitBtn = document.getElementById('submitBtn');
-    const usernameVal = usernameInput.value.trim();
+    const emailVal = emailInput.value.trim();
     const passwordVal = passwordInput.value.trim();
 
     // Validations
     let isValid = true;
-    const userError = document.getElementById('usernameError');
-    usernameInput.classList.remove('input-error');
-    userError.classList.remove('visible');
+    const emailError = document.getElementById('emailError');
+    emailInput.classList.remove('input-error');
+    emailError.classList.remove('visible');
 
-    if (usernameVal === '') {
-        showError(usernameInput, userError, 'Username is required');
+    if (emailVal === '') {
+        showError(emailInput, emailError, 'Email is required');
         isValid = false;
-    } else if (usernameVal.length < 3) {
-        showError(usernameInput, userError, 'Username must be at least 3 characters');
+    } else if (emailVal.length < 3) {
+        showError(emailInput, emailError, 'Email must be at least 3 characters');
         isValid = false;
     }
 
@@ -31,57 +31,58 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     }
 
     if (isValid) {
-        // Determine mock role based on username for demo
+        // Determine mock role based on email for demo
         // admin -> admin role
         // analyst -> analyst role
         // other -> viewer role
         let role = 'viewer';
-        if (usernameVal.toLowerCase().includes('admin')) role = 'admin';
-        else if (usernameVal.toLowerCase().includes('analyst')) role = 'analyst';
+        if (emailVal.toLowerCase().includes('admin')) role = 'admin';
+        else if (emailVal.toLowerCase().includes('analyst')) role = 'analyst';
 
         submitBtn.disabled = true;
         submitBtn.querySelector('.button__text').innerText = 'Authenticating...';
 
         try {
-            const response = await fetch('/api/login', {
+            const response = await fetch('http://127.0.0.1:5000/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    username: usernameVal,
-                    role: role
+                    email: emailVal,
+                    password: passwordVal
                 })
             });
 
             if (response.ok) {
                 const data = await response.json();
-                localStorage.setItem('token', data.token);
+                // Store minimal info or token if provided by backend (backend returns success message)
+                localStorage.setItem('user_email', emailVal);
                 localStorage.setItem('role', role);
 
                 // Access the protected dashboard
-                loadDashboard(data.token, role);
+                loadDashboard(role);
             } else {
-                showError(usernameInput, userError, 'Authentication failed');
+                alert('Authentication failed');
                 submitBtn.disabled = false;
                 submitBtn.querySelector('.button__text').innerText = 'Login';
             }
         } catch (error) {
             console.error('Login Error:', error);
-            showError(usernameInput, userError, 'Network error');
+            alert('Network error');
             submitBtn.disabled = false;
             submitBtn.querySelector('.button__text').innerText = 'Login';
         }
     }
 });
 
-async function loadDashboard(token, role) {
+async function loadDashboard(role) {
     // Simple redirection to the new dashboard page
     window.location.href = 'dashboard.html';
 }
 
 function logout() {
-    localStorage.removeItem('token');
+    localStorage.removeItem('user_email');
     localStorage.removeItem('role');
     location.reload();
 }
