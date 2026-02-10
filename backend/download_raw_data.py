@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BUCKET_NAME = os.getenv("STORAGE_BUCKET_NAME")
-RAW_DATA_PATH = "../data/raw/"
+RAW_DATA_PATH = os.getenv("RAW_DATA_PATH", "../data/raw/")
 
 def download_files_from_storage():
     files = supabase.storage.from_(BUCKET_NAME).list()

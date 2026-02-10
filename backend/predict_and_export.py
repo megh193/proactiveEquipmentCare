@@ -1,11 +1,14 @@
+import os
 import pandas as pd
 import numpy as np
 from tensorflow import keras
-import os
+from dotenv import load_dotenv
 
-MODEL_PATH = "../models/motor_lstm_model.h5"
-PROCESSED_DATA_PATH = "../data/processed/processed_motor_data.csv"
-OUTPUT_PATH = "../dashboard/motor_failure_predictions.csv"
+load_dotenv()
+
+MODEL_PATH = os.getenv('MODEL_PATH', '../models/motor_lstm_model.h5')
+PROCESSED_DATA_PATH = os.getenv('PROCESSED_DATA_PATH', '../data/processed/processed_motor_data.csv')
+OUTPUT_PATH = os.getenv('OUTPUT_PATH', '../dashboard/motor_failure_predictions.csv')
 
 def load_model():
     return keras.models.load_model(MODEL_PATH)
