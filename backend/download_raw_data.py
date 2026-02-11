@@ -1,24 +1,34 @@
 import os
-from supabase_client import supabase
+import requests
 from dotenv import load_dotenv
 
+# Load .env file
 load_dotenv()
 
-BUCKET_NAME = os.getenv("STORAGE_BUCKET_NAME")
-RAW_DATA_PATH = os.getenv("RAW_DATA_PATH", "../data/raw/")
+# Get URL from .env
+url = os.getenv("DOWNLOAD_RAW_DATA_URL")
 
-def download_files_from_storage():
-    files = supabase.storage.from_(BUCKET_NAME).list()
-    
-    for file in files:
-        file_name = file['name']
-        if file_name.endswith('.csv'):
-            data = supabase.storage.from_(BUCKET_NAME).download(file_name)
-            
-            with open(os.path.join(RAW_DATA_PATH, file_name), 'wb') as f:
-                f.write(data)
-            
-            print(f"Downloaded: {file_name}")
+if not url:
+    raise ValueError("DOWNLOAD_RAW_DATA_URL not found in .env file")
 
-if __name__ == "__main__":
-    download_files_from_storage()
+# Get project root directory
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# data/raw path
+RAW_DATA_DIR = os.path.join(BASE_DIR, "data", "raw")
+
+# Ensure folder exists
+os.makedirs(RAW_DATA_DIR, exist_ok=True)
+
+# Final file path
+file_path = os.path.join(RAW_DATA_DIR, "merged_sensorData.csv")
+
+# Download file
+response = requests.get(url)
+
+if response.status_code == 200:
+    with open(file_path, "wb") as f:
+        f.write(response.content)
+    print("CSV saved in data/raw")
+else:
+    print("Download failed:", response.status_code)
