@@ -1,0 +1,522 @@
+================================================================================
+                          PROJECT PLAN
+        PROACTIVE EQUIPMENT CARE: PREDICTIVE MAINTENANCE SYSTEM
+================================================================================
+
+PROJECT OVERVIEW
+--------------------------------------------------------------------------------
+Project Name: Proactive Equipment Care
+Domain: Predictive Maintenance & Industrial IoT
+Technology Stack: Python, LSTM Neural Networks, Supabase, Tableau, Flask
+Objective: Develop an intelligent predictive maintenance system for motor 
+          equipment using deep learning to forecast equipment failures and 
+          minimize downtime.
+
+
+EXECUTIVE SUMMARY
+--------------------------------------------------------------------------------
+This project implements a comprehensive predictive maintenance solution that
+leverages Long Short-Term Memory (LSTM) neural networks to analyze motor sensor
+data and predict potential equipment failures. The system integrates cloud-based
+data storage (Supabase), machine learning models, and interactive visualization
+dashboards (Tableau) to provide actionable insights for maintenance teams.
+
+
+PROJECT PHASES & DELIVERABLES
+================================================================================
+
+PHASE 0: PROJECT INITIALIZATION & ENVIRONMENT SETUP
+--------------------------------------------------------------------------------
+Duration: Week 1
+
+Objectives:
+  • Establish development environment
+  • Install required software and dependencies
+  • Create project directory structure
+  • Set up version control system
+
+Activities:
+  1. Install Python 3.9+, VS Code, Jupyter Notebook, Tableau Public
+  2. Create standardized project folder hierarchy
+  3. Initialize Git repository for version control
+  4. Document system requirements and specifications
+
+Deliverables:
+  ✓ Configured development environment
+  ✓ Project structure with organized directories
+  ✓ requirements.txt with all dependencies
+  ✓ Initial project documentation
+
+Key Directories Created:
+  - data/raw/          : Raw sensor data storage
+  - data/processed/    : Cleaned and preprocessed data
+  - notebooks/         : Jupyter notebooks for analysis
+  - backend/           : Python scripts and Flask API
+  - frontend/          : User interface components
+  - dashboard/         : Prediction outputs for visualization
+  - docs/              : Project documentation
+
+
+PHASE 1: CLOUD INFRASTRUCTURE & DATABASE SETUP
+--------------------------------------------------------------------------------
+Duration: Week 1-2
+
+Objectives:
+  • Configure Supabase cloud platform
+  • Establish secure data storage infrastructure
+  • Create database schema for logging and predictions
+
+Activities:
+  1. Create Supabase project and obtain API credentials
+  2. Configure storage bucket for raw motor data (motor-raw-data)
+  3. Design and implement database tables:
+     - login_logs: User authentication and access tracking
+     - model_predictions: ML model output storage
+  4. Set up security policies and access controls
+  5. Create .env configuration file for credential management
+
+Deliverables:
+  ✓ Operational Supabase project
+  ✓ Configured storage bucket with access policies
+  ✓ Database tables with proper schema
+  ✓ Secure credential management system
+  ✓ Connection testing documentation
+
+Technical Components:
+  - Supabase Project URL and API keys
+  - Storage bucket configuration
+  - SQL table definitions
+  - Environment variable configuration
+
+
+PHASE 2: DATA PIPELINE DEVELOPMENT
+--------------------------------------------------------------------------------
+Duration: Week 2-3
+
+Objectives:
+  • Establish automated data ingestion pipeline
+  • Create Python-Supabase integration layer
+  • Implement data download and storage mechanisms
+
+Activities:
+  1. Develop supabase_client.py for API authentication
+  2. Implement download_raw_data.py for automated data retrieval
+  3. Create data validation and integrity checks
+  4. Test end-to-end data flow from cloud to local storage
+  5. Document data pipeline architecture
+
+Deliverables:
+  ✓ backend/supabase_client.py - Supabase connection module
+  ✓ backend/download_raw_data.py - Data ingestion script
+  ✓ Automated data download functionality
+  ✓ Data pipeline documentation
+  ✓ Error handling and logging mechanisms
+
+Key Features:
+  - Secure API authentication
+  - Automated CSV file retrieval
+  - Local data storage in data/raw/
+  - Connection error handling
+
+
+PHASE 3: DATA PREPROCESSING & FEATURE ENGINEERING
+--------------------------------------------------------------------------------
+Duration: Week 3-5
+
+Objectives:
+  • Clean and prepare raw sensor data
+  • Perform exploratory data analysis
+  • Engineer relevant features for model training
+  • Create reproducible preprocessing pipeline
+
+Activities:
+  1. Data Loading (Notebook 01):
+     - Import raw CSV files from multiple sources
+     - Merge datasets into unified DataFrame
+     - Sort by timestamp for temporal analysis
+
+  2. Data Preprocessing (Notebook 02):
+     - Handle missing values and outliers
+     - Remove noise from sensor readings
+     - Normalize numerical features
+     - Address data quality issues
+
+  3. Feature Selection (Notebook 03):
+     - Identify critical motor parameters:
+       * Temperature sensors
+       * Vibration measurements
+       * Current and Voltage readings
+       * RPM (Rotations Per Minute)
+       * Load conditions
+     - Define target variable (Failure indicator or RUL)
+     - Perform correlation analysis
+
+Deliverables:
+  ✓ notebooks/01_data_loading.ipynb
+  ✓ notebooks/02_data_preprocessing.ipynb
+  ✓ notebooks/03_feature_selection.ipynb
+  ✓ data/processed/processed_motor_data.csv
+  ✓ Data quality report
+  ✓ Feature importance analysis
+
+Data Quality Metrics:
+  - Completeness assessment
+  - Outlier detection results
+  - Feature correlation matrix
+  - Statistical summaries
+
+
+PHASE 4: LSTM MODEL DEVELOPMENT & TRAINING
+--------------------------------------------------------------------------------
+Duration: Week 5-7
+
+Objectives:
+  • Design LSTM neural network architecture
+  • Prepare time-series sequences for training
+  • Train and validate predictive model
+  • Optimize model performance
+
+Activities:
+  1. Sequence Preparation (Notebook 04):
+     - Transform tabular data into time-series sequences
+     - Create sliding window approach (e.g., 30 timestamps)
+     - Generate input-output pairs for supervised learning
+     - Split data into training, validation, and test sets
+
+  2. LSTM Model Building (Notebook 05):
+     - Design multi-layer LSTM architecture
+     - Configure hyperparameters (layers, units, dropout)
+     - Implement training pipeline using TensorFlow/Keras
+     - Apply regularization techniques
+     - Evaluate model performance metrics:
+       * Accuracy
+       * Precision and Recall
+       * F1-Score
+       * ROC-AUC
+     - Save trained model for deployment
+
+Deliverables:
+  ✓ notebooks/04_sequence_builder.ipynb
+  ✓ notebooks/05_lstm_model.ipynb
+  ✓ models/motor_lstm_model.h5 - Trained LSTM model
+  ✓ Model performance report
+  ✓ Training history and loss curves
+  ✓ Model architecture documentation
+
+Model Specifications:
+  - Input: Sequential sensor data (time-series)
+  - Output: Failure probability (0-1)
+  - Architecture: Multi-layer LSTM with dropout
+  - Framework: TensorFlow/Keras
+
+
+PHASE 5: PREDICTION GENERATION & EXPORT
+--------------------------------------------------------------------------------
+Duration: Week 7-8
+
+Objectives:
+  • Deploy trained model for inference
+  • Generate failure probability predictions
+  • Export results for visualization
+  • Integrate with cloud storage
+
+Activities:
+  1. Develop predict_and_export.py script
+  2. Load trained LSTM model
+  3. Process new/test data through model
+  4. Calculate failure probabilities for each motor
+  5. Export predictions to CSV format
+  6. (Optional) Upload results to Supabase storage
+  7. Implement automated prediction scheduling
+
+Deliverables:
+  ✓ backend/predict_and_export.py
+  ✓ dashboard/motor_failure_predictions.csv
+  ✓ Prediction accuracy validation report
+  ✓ Automated prediction workflow
+
+Output Format:
+  - Motor ID
+  - Timestamp
+  - Failure Probability
+  - Risk Level Classification
+  - Recommended Actions
+
+
+PHASE 6: WEB APPLICATION & AUTHENTICATION
+--------------------------------------------------------------------------------
+Duration: Week 8-9
+
+Objectives:
+  • Develop user-facing web application
+  • Implement secure authentication system
+  • Integrate dashboard with login functionality
+  • Create responsive user interface
+
+Activities:
+  1. Frontend Development:
+     - Design login.html with email/password fields
+     - Create style.css for professional UI styling
+     - Develop dashboard.html for authenticated users
+     - Embed Tableau dashboard iframe
+
+  2. Backend Authentication:
+     - Implement auth_service.py for user validation
+     - Integrate Supabase Authentication API
+     - Create session management
+     - Implement logout functionality
+
+  3. Flask API Development:
+     - Set up Flask application (app.py)
+     - Create API endpoints for authentication
+     - Implement CORS configuration
+     - Add error handling and validation
+
+Deliverables:
+  ✓ frontend/login.html - User login interface
+  ✓ frontend/dashboard.html - Main dashboard page
+  ✓ frontend/style.css - UI styling
+  ✓ backend/auth_service.py - Authentication logic
+  ✓ backend/app.py - Flask API server
+  ✓ User authentication flow documentation
+
+Security Features:
+  - Secure password handling
+  - Session management
+  - Access control
+  - HTTPS enforcement (production)
+
+
+PHASE 7: LOGGING, MONITORING & AUDIT TRAIL
+--------------------------------------------------------------------------------
+Duration: Week 9-10
+
+Objectives:
+  • Implement comprehensive logging system
+  • Create audit trail for compliance
+  • Monitor system performance and usage
+  • Establish enterprise-grade tracking
+
+Activities:
+  1. Implement login logging functionality:
+     - Capture user email
+     - Record login timestamp
+     - Log IP address
+     - Track dashboard access
+  2. Store logs in Supabase login_logs table
+  3. Create log analysis and reporting tools
+  4. Implement system health monitoring
+  5. Set up error tracking and alerting
+
+Deliverables:
+  ✓ Automated login logging system
+  ✓ Populated login_logs database table
+  ✓ Log analysis reports
+  ✓ System monitoring dashboard
+  ✓ Audit trail documentation
+
+Logging Capabilities:
+  - User authentication tracking
+  - System access logs
+  - Error and exception logging
+  - Performance metrics
+  - Security event monitoring
+
+
+PHASE 8: INTERACTIVE DASHBOARD DEVELOPMENT
+--------------------------------------------------------------------------------
+Duration: Week 10-11
+
+Objectives:
+  • Create interactive visualization dashboard
+  • Implement real-time monitoring capabilities
+  • Design intuitive user interface for maintenance teams
+
+Activities:
+  1. Load prediction data into Tableau Public
+  2. Design dashboard components:
+     - Time-series failure probability charts
+     - Risk threshold indicators (>0.8 = high risk)
+     - Motor health status overview
+     - Historical trend analysis
+     - Alert notifications for critical conditions
+  3. Configure interactive filters and parameters
+  4. Publish dashboard to Tableau Public
+  5. Generate embeddable iframe code
+  6. Test dashboard responsiveness and performance
+
+Deliverables:
+  ✓ Tableau Public dashboard
+  ✓ Published dashboard URL
+  ✓ Embeddable iframe code
+  ✓ Dashboard user guide
+  ✓ Visualization design documentation
+
+Dashboard Features:
+  - Real-time failure probability monitoring
+  - Color-coded risk indicators
+  - Historical trend analysis
+  - Interactive filtering by motor ID
+  - Exportable reports
+
+
+PHASE 9: TESTING, VALIDATION & DEPLOYMENT
+--------------------------------------------------------------------------------
+Duration: Week 11-12
+
+Objectives:
+  • Conduct comprehensive system testing
+  • Validate end-to-end functionality
+  • Optimize performance
+  • Prepare for production deployment
+
+Activities:
+  1. End-to-End Testing:
+     - Verify data download functionality
+     - Test model training pipeline
+     - Validate prediction accuracy
+     - Check dashboard refresh mechanisms
+     - Confirm login log storage
+
+  2. Performance Testing:
+     - Load testing for concurrent users
+     - API response time optimization
+     - Database query performance
+     - Model inference speed
+
+  3. User Acceptance Testing:
+     - Gather feedback from stakeholders
+     - Conduct usability testing
+     - Refine UI/UX based on feedback
+
+  4. Documentation:
+     - Create user manual
+     - Write technical documentation
+     - Prepare deployment guide
+     - Document API endpoints
+
+Deliverables:
+  ✓ Test cases and results
+  ✓ Performance benchmarks
+  ✓ User acceptance sign-off
+  ✓ Complete system documentation
+  ✓ Deployment checklist
+  ✓ Training materials
+
+Testing Coverage:
+  - Unit tests for backend modules
+  - Integration tests for API endpoints
+  - End-to-end workflow validation
+  - Security vulnerability assessment
+  - Cross-browser compatibility
+
+
+PHASE 10: DOCUMENTATION & PROJECT CLOSURE
+--------------------------------------------------------------------------------
+Duration: Week 12
+
+Objectives:
+  • Finalize all project documentation
+  • Create comprehensive user guides
+  • Prepare project presentation
+  • Archive project artifacts
+
+Activities:
+  1. Compile technical documentation:
+     - System architecture diagrams
+     - Database schema documentation
+     - API reference guide
+     - Model architecture details
+
+  2. Create user documentation:
+     - Installation guide
+     - User manual
+     - Troubleshooting guide
+     - FAQ document
+
+  3. Prepare project report:
+     - Executive summary
+     - Methodology description
+     - Results and findings
+     - Future enhancements
+
+  4. Project presentation:
+     - Create presentation slides
+     - Prepare demo scenarios
+     - Document lessons learned
+
+Deliverables:
+  ✓ docs/workflow.pdf - Complete workflow documentation
+  ✓ docs/architecture.png - System architecture diagram
+  ✓ docs/project_summary.txt - Project overview
+  ✓ README.md - Quick start guide
+  ✓ Final project report
+  ✓ Presentation materials
+
+
+RESOURCE REQUIREMENTS
+================================================================================
+
+Human Resources:
+----------------
+• Project Manager: 1 person
+• Data Scientist/ML Engineer: 1 person
+• Backend Developer: 1 person
+• Frontend Developer: 1 person
+• QA Engineer: 1 person (part-time)
+
+Technical Resources:
+--------------------
+• Development workstations with Python environment
+• Supabase cloud subscription (Free tier for development)
+• Tableau Public account
+• Git repository for version control
+• Cloud storage for data backup
+
+Software & Tools:
+-----------------
+• Python 3.9+ with TensorFlow/Keras
+• Jupyter Notebook for analysis
+• VS Code or PyCharm IDE
+• Supabase for backend services
+• Tableau Public for visualization
+• Flask for web API
+• Git for version control
+
+
+PROJECT TIMELINE SUMMARY
+================================================================================
+
+Total Duration: 12 Weeks
+
+Week 1-2   : Environment Setup & Cloud Infrastructure
+Week 3-5   : Data Pipeline & Preprocessing
+Week 5-7   : LSTM Model Development
+Week 7-8   : Prediction Generation
+Week 8-9   : Web Application & Authentication
+Week 9-10  : Logging & Monitoring
+Week 10-11 : Dashboard Development
+Week 11-12 : Testing & Documentation
+
+Critical Path:
+--------------
+Data Collection → Preprocessing → Model Training → Prediction → Dashboard
+
+
+CONCLUSION
+================================================================================
+
+The Proactive Equipment Care project delivers a comprehensive predictive
+maintenance solution that combines modern machine learning techniques with
+cloud infrastructure and interactive visualization. By following this structured
+project plan, the system will provide actionable insights for maintenance teams,
+reduce equipment downtime, and optimize maintenance operations.
+
+The modular architecture ensures scalability and maintainability, while the
+integration of industry-standard tools (Supabase, Tableau, Flask) provides a
+robust foundation for enterprise deployment.
+
+
+================================================================================
+                        END OF PROJECT PLAN
+================================================================================

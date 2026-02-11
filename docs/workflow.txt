@@ -1,0 +1,780 @@
+================================================================================
+                    PROJECT WORKFLOW DIAGRAM
+        PROACTIVE EQUIPMENT CARE: PREDICTIVE MAINTENANCE SYSTEM
+================================================================================
+
+
+SYSTEM ARCHITECTURE OVERVIEW
+================================================================================
+
+                        ┌─────────────────────────────┐
+                        │   SUPABASE CLOUD PLATFORM   │
+                        │  ┌──────────┐  ┌──────────┐ │
+                        │  │ Storage  │  │ Database │ │
+                        │  │  Bucket  │  │  Tables  │ │
+                        │  └──────────┘  └──────────┘ │
+                        └──────────┬──────────────────┘
+                                   │
+                                   ↓
+                        ┌──────────────────────────────┐
+                        │   DATA PIPELINE (Backend)    │
+                        │  - download_raw_data.py      │
+                        │  - supabase_client.py        │
+                        └──────────┬───────────────────┘
+                                   │
+                                   ↓
+                        ┌──────────────────────────────┐
+                        │   DATA PROCESSING LAYER      │
+                        │  - Jupyter Notebooks (01-05) │
+                        │  - Feature Engineering       │
+                        └──────────┬───────────────────┘
+                                   │
+                                   ↓
+                        ┌──────────────────────────────┐
+                        │   LSTM MODEL (TensorFlow)    │
+                        │  - Training & Validation     │
+                        │  - motor_lstm_model.h5       │
+                        └──────────┬───────────────────┘
+                                   │
+                                   ↓
+                        ┌──────────────────────────────┐
+                        │   PREDICTION ENGINE          │
+                        │  - predict_and_export.py     │
+                        │  - Failure Probabilities     │
+                        └──────────┬───────────────────┘
+                                   │
+                    ┌──────────────┴──────────────┐
+                    ↓                             ↓
+         ┌──────────────────────┐    ┌──────────────────────┐
+         │  WEB APPLICATION     │    │  TABLEAU DASHBOARD   │
+         │  - Flask API         │    │  - Visualizations    │
+         │  - Authentication    │    │  - Risk Indicators   │
+         │  - Frontend (HTML)   │    │  - Trend Analysis    │
+         └──────────────────────┘    └──────────────────────┘
+                    │
+                    ↓
+         ┌──────────────────────┐
+         │  LOGGING & MONITORING│
+         │  - login_logs        │
+         │  - Audit Trail       │
+         └──────────────────────┘
+
+
+DETAILED WORKFLOW PHASES
+================================================================================
+
+
+PHASE 0: PROJECT INITIALIZATION
+--------------------------------------------------------------------------------
+
+    START
+      │
+      ├─→ Install Python 3.9+
+      ├─→ Install VS Code
+      ├─→ Install Jupyter Notebook
+      ├─→ Install Tableau Public
+      │
+      ├─→ Create Project Structure:
+      │     ├── data/raw/
+      │     ├── data/processed/
+      │     ├── notebooks/
+      │     ├── backend/
+      │     ├── frontend/
+      │     ├── dashboard/
+      │     └── docs/
+      │
+      └─→ Initialize Git Repository
+            │
+            ↓
+         [Environment Ready]
+
+
+PHASE 1: CLOUD INFRASTRUCTURE SETUP
+--------------------------------------------------------------------------------
+
+    [Environment Ready]
+            │
+            ├─→ Create Supabase Project
+            │     │
+            │     ├─→ Obtain Project URL
+            │     ├─→ Obtain API Keys (anon, service)
+            │     └─→ Save credentials
+            │
+            ├─→ Configure Storage Bucket
+            │     │
+            │     ├─→ Create "motor-raw-data" bucket
+            │     ├─→ Set access policies (private)
+            │     └─→ Upload CSV files
+            │
+            ├─→ Create Database Tables
+            │     │
+            │     ├─→ CREATE TABLE login_logs
+            │     │     ├── id (uuid)
+            │     │     ├── user_email (text)
+            │     │     ├── login_time (timestamp)
+            │     │     ├── ip_address (text)
+            │     │     └── dashboard_accessed (text)
+            │     │
+            │     └─→ CREATE TABLE model_predictions
+            │           ├── timestamp (timestamp)
+            │           ├── motor_id (text)
+            │           └── failure_probability (float)
+            │
+            └─→ Create .env Configuration
+                  ├── SUPABASE_URL=...
+                  ├── SUPABASE_KEY=...
+                  └── SUPABASE_BUCKET=...
+                        │
+                        ↓
+                [Cloud Infrastructure Ready]
+
+
+PHASE 2: DATA PIPELINE DEVELOPMENT
+--------------------------------------------------------------------------------
+
+    [Cloud Infrastructure Ready]
+            │
+            ├─→ Develop supabase_client.py
+            │     │
+            │     ├─→ Import Supabase library
+            │     ├─→ Load environment variables
+            │     ├─→ Initialize Supabase client
+            │     └─→ Create connection functions
+            │
+            ├─→ Develop download_raw_data.py
+            │     │
+            │     ├─→ Connect to Supabase Storage
+            │     ├─→ List files in bucket
+            │     ├─→ Download CSV files
+            │     ├─→ Save to data/raw/
+            │     └─→ Validate downloads
+            │
+            └─→ Test Data Pipeline
+                  │
+                  ├─→ Run: python backend/download_raw_data.py
+                  ├─→ Verify files in data/raw/
+                  └─→ Check data integrity
+                        │
+                        ↓
+                [Raw Data Available Locally]
+
+
+PHASE 3: DATA PREPROCESSING & FEATURE ENGINEERING
+--------------------------------------------------------------------------------
+
+    [Raw Data Available]
+            │
+            ├─→ NOTEBOOK 01: Data Loading
+            │     │
+            │     ├─→ Import pandas, numpy
+            │     ├─→ Read CSV files from data/raw/
+            │     ├─→ Merge multiple datasets
+            │     ├─→ Sort by timestamp
+            │     ├─→ Explore data structure
+            │     └─→ Output: Unified DataFrame
+            │           │
+            │           ↓
+            ├─→ NOTEBOOK 02: Data Preprocessing
+            │     │
+            │     ├─→ Handle Missing Values
+            │     │     ├── Identify null values
+            │     │     ├── Forward fill / Interpolation
+            │     │     └── Drop if necessary
+            │     │
+            │     ├─→ Remove Outliers
+            │     │     ├── Z-score method
+            │     │     ├── IQR method
+            │     │     └── Domain knowledge filtering
+            │     │
+            │     ├─→ Normalize Features
+            │     │     ├── Min-Max Scaling
+            │     │     ├── Standard Scaling
+            │     │     └── Save scalers for later use
+            │     │
+            │     └─→ Output: Cleaned DataFrame
+            │           │
+            │           ↓
+            ├─→ NOTEBOOK 03: Feature Selection
+            │     │
+            │     ├─→ Select Motor Parameters:
+            │     │     ├── Temperature
+            │     │     ├── Vibration
+            │     │     ├── Current
+            │     │     ├── Voltage
+            │     │     ├── RPM
+            │     │     └── Load
+            │     │
+            │     ├─→ Correlation Analysis
+            │     │     ├── Compute correlation matrix
+            │     │     ├── Identify multicollinearity
+            │     │     └── Remove redundant features
+            │     │
+            │     ├─→ Define Target Variable
+            │     │     ├── Failure (0/1) OR
+            │     │     └── RUL (Remaining Useful Life)
+            │     │
+            │     └─→ Save: data/processed/processed_motor_data.csv
+            │           │
+            │           ↓
+            [Processed Data Ready for ML]
+
+
+PHASE 4: LSTM MODEL DEVELOPMENT & TRAINING
+--------------------------------------------------------------------------------
+
+    [Processed Data Ready]
+            │
+            ├─→ NOTEBOOK 04: Sequence Builder
+            │     │
+            │     ├─→ Load processed data
+            │     ├─→ Define sequence length (e.g., 30 timestamps)
+            │     │
+            │     ├─→ Create Sequences
+            │     │     │
+            │     │     ├─→ Sliding Window Approach:
+            │     │     │     Input: [t-29, t-28, ..., t-1, t]
+            │     │     │     Output: Failure at t+1
+            │     │     │
+            │     │     └─→ Generate X (features) and y (target)
+            │     │
+            │     ├─→ Split Data
+            │     │     ├── Training Set (70%)
+            │     │     ├── Validation Set (15%)
+            │     │     └── Test Set (15%)
+            │     │
+            │     └─→ Save sequence arrays
+            │           │
+            │           ↓
+            ├─→ NOTEBOOK 05: LSTM Model Training
+            │     │
+            │     ├─→ Import TensorFlow/Keras
+            │     │
+            │     ├─→ Build LSTM Architecture:
+            │     │     │
+            │     │     ├─→ Input Layer (sequence_length, features)
+            │     │     ├─→ LSTM Layer 1 (128 units, return_sequences=True)
+            │     │     ├─→ Dropout (0.2)
+            │     │     ├─→ LSTM Layer 2 (64 units)
+            │     │     ├─→ Dropout (0.2)
+            │     │     ├─→ Dense Layer (32 units, ReLU)
+            │     │     └─→ Output Layer (1 unit, Sigmoid)
+            │     │
+            │     ├─→ Compile Model
+            │     │     ├── Optimizer: Adam
+            │     │     ├── Loss: Binary Crossentropy
+            │     │     └── Metrics: Accuracy, Precision, Recall
+            │     │
+            │     ├─→ Train Model
+            │     │     ├── Epochs: 50-100
+            │     │     ├── Batch Size: 32
+            │     │     ├── Early Stopping (patience=10)
+            │     │     └── Model Checkpoint (save best)
+            │     │
+            │     ├─→ Evaluate Model
+            │     │     ├── Test Set Accuracy
+            │     │     ├── Precision & Recall
+            │     │     ├── F1-Score
+            │     │     ├── ROC-AUC
+            │     │     └── Confusion Matrix
+            │     │
+            │     ├─→ Plot Training History
+            │     │     ├── Loss curves
+            │     │     └── Accuracy curves
+            │     │
+            │     └─→ Save: models/motor_lstm_model.h5
+            │           │
+            │           ↓
+            [Trained LSTM Model Ready]
+
+
+PHASE 5: PREDICTION GENERATION & EXPORT
+--------------------------------------------------------------------------------
+
+    [Trained Model Ready]
+            │
+            ├─→ Develop predict_and_export.py
+            │     │
+            │     ├─→ Load trained model
+            │     │     └── model = load_model('models/motor_lstm_model.h5')
+            │     │
+            │     ├─→ Load new/test data
+            │     │     ├── Read from data/processed/
+            │     │     └── Prepare sequences
+            │     │
+            │     ├─→ Generate Predictions
+            │     │     │
+            │     │     ├─→ For each motor:
+            │     │     │     ├── Create input sequence
+            │     │     │     ├── predictions = model.predict(sequence)
+            │     │     │     └── failure_probability = predictions[0]
+            │     │     │
+            │     │     └─→ Compile results
+            │     │
+            │     ├─→ Add Risk Classification
+            │     │     ├── probability > 0.8 → HIGH RISK
+            │     │     ├── probability 0.5-0.8 → MEDIUM RISK
+            │     │     └── probability < 0.5 → LOW RISK
+            │     │
+            │     ├─→ Export to CSV
+            │     │     └── dashboard/motor_failure_predictions.csv
+            │     │           Columns:
+            │     │           - motor_id
+            │     │           - timestamp
+            │     │           - failure_probability
+            │     │           - risk_level
+            │     │           - recommended_action
+            │     │
+            │     └─→ (Optional) Upload to Supabase
+            │           │
+            │           ↓
+            [Predictions Generated]
+
+
+PHASE 6: WEB APPLICATION & AUTHENTICATION
+--------------------------------------------------------------------------------
+
+    [Predictions Generated]
+            │
+            ├─→ Frontend Development
+            │     │
+            │     ├─→ Create login.html
+            │     │     ├── Email input field
+            │     │     ├── Password input field
+            │     │     ├── Login button
+            │     │     └── Form validation
+            │     │
+            │     ├─→ Create style.css
+            │     │     ├── Professional styling
+            │     │     ├── Responsive design
+            │     │     └── Color scheme
+            │     │
+            │     └─→ Create dashboard.html
+            │           ├── Header with user info
+            │           ├── Navigation menu
+            │           ├── Tableau iframe placeholder
+            │           └── Logout button
+            │
+            ├─→ Backend Development
+            │     │
+            │     ├─→ Create auth_service.py
+            │     │     │
+            │     │     ├─→ validate_user(email, password)
+            │     │     │     ├── Check credentials
+            │     │     │     ├── Supabase Auth API
+            │     │     │     └── Return success/failure
+            │     │     │
+            │     │     └─→ create_session(user_email)
+            │     │           ├── Generate session token
+            │     │           └── Store in session
+            │     │
+            │     └─→ Create app.py (Flask API)
+            │           │
+            │           ├─→ @app.route('/login', methods=['POST'])
+            │           │     ├── Get email, password from request
+            │           │     ├── Call validate_user()
+            │           │     ├── Log to login_logs table
+            │           │     └── Return success/redirect
+            │           │
+            │           ├─→ @app.route('/dashboard', methods=['GET'])
+            │           │     ├── Check session
+            │           │     ├── Serve dashboard.html
+            │           │     └── Embed Tableau iframe
+            │           │
+            │           └─→ @app.route('/logout', methods=['POST'])
+            │                 ├── Clear session
+            │                 └── Redirect to login
+            │
+            └─→ Integration
+                  │
+                  ├─→ Connect frontend to Flask API
+                  ├─→ Test authentication flow
+                  └─→ Verify session management
+                        │
+                        ↓
+                [Web Application Ready]
+
+
+PHASE 7: LOGGING, MONITORING & AUDIT TRAIL
+--------------------------------------------------------------------------------
+
+    [Web Application Ready]
+            │
+            ├─→ Implement Login Logging
+            │     │
+            │     ├─→ On successful login:
+            │     │     │
+            │     │     ├─→ Capture Data:
+            │     │     │     ├── user_email
+            │     │     │     ├── login_time (current timestamp)
+            │     │     │     ├── ip_address (request.remote_addr)
+            │     │     │     └── dashboard_accessed (True/False)
+            │     │     │
+            │     │     └─→ INSERT INTO login_logs
+            │     │           VALUES (uuid, email, time, ip, accessed)
+            │     │
+            │     └─→ Store in Supabase database
+            │
+            ├─→ System Health Monitoring
+            │     │
+            │     ├─→ Monitor API response times
+            │     ├─→ Track prediction accuracy
+            │     ├─→ Database query performance
+            │     └─→ Error rate tracking
+            │
+            └─→ Create Log Analysis Tools
+                  │
+                  ├─→ User activity reports
+                  ├─→ System performance metrics
+                  └─→ Security event monitoring
+                        │
+                        ↓
+                [Logging System Active]
+
+
+PHASE 8: INTERACTIVE DASHBOARD DEVELOPMENT
+--------------------------------------------------------------------------------
+
+    [Logging System Active]
+            │
+            ├─→ Open Tableau Public
+            │
+            ├─→ Load Data
+            │     └── Import: dashboard/motor_failure_predictions.csv
+            │
+            ├─→ Create Visualizations
+            │     │
+            │     ├─→ Time-Series Chart
+            │     │     ├── X-axis: Timestamp
+            │     │     ├── Y-axis: Failure Probability
+            │     │     └── Color: Risk Level
+            │     │
+            │     ├─→ Risk Threshold Indicator
+            │     │     ├── Gauge chart
+            │     │     ├── Threshold line at 0.8
+            │     │     └── Color coding (Red/Yellow/Green)
+            │     │
+            │     ├─→ Motor Health Overview
+            │     │     ├── Table view of all motors
+            │     │     ├── Current status
+            │     │     └── Last prediction time
+            │     │
+            │     └─→ Historical Trend Analysis
+            │           ├── Line charts
+            │           ├── Moving averages
+            │           └── Failure event markers
+            │
+            ├─→ Add Interactive Features
+            │     │
+            │     ├─→ Filters
+            │     │     ├── Motor ID filter
+            │     │     ├── Date range filter
+            │     │     └── Risk level filter
+            │     │
+            │     ├─→ Parameters
+            │     │     ├── Threshold adjustment
+            │     │     └── Time window selection
+            │     │
+            │     └─→ Actions
+            │           ├── Drill-down capability
+            │           └── Tooltip details
+            │
+            ├─→ Publish Dashboard
+            │     │
+            │     ├─→ Save to Tableau Public
+            │     ├─→ Copy public URL
+            │     └─→ Generate iframe embed code
+            │
+            └─→ Embed in Web Application
+                  │
+                  ├─→ Update dashboard.html
+                  ├─→ Insert iframe code
+                  └─→ Test responsiveness
+                        │
+                        ↓
+                [Dashboard Live]
+
+
+PHASE 9: TESTING, VALIDATION & DEPLOYMENT
+--------------------------------------------------------------------------------
+
+    [Dashboard Live]
+            │
+            ├─→ End-to-End Testing
+            │     │
+            │     ├─→ Test Data Pipeline
+            │     │     ├── Run download_raw_data.py
+            │     │     ├── Verify data in data/raw/
+            │     │     └── Check data integrity
+            │     │
+            │     ├─→ Test Model Training
+            │     │     ├── Execute notebooks 01-05
+            │     │     ├── Verify model creation
+            │     │     └── Check performance metrics
+            │     │
+            │     ├─→ Test Prediction Generation
+            │     │     ├── Run predict_and_export.py
+            │     │     ├── Verify CSV output
+            │     │     └── Validate predictions
+            │     │
+            │     ├─→ Test Web Application
+            │     │     ├── Login functionality
+            │     │     ├── Session management
+            │     │     ├── Dashboard access
+            │     │     └── Logout functionality
+            │     │
+            │     └─→ Test Dashboard
+            │           ├── Data refresh
+            │           ├── Interactive filters
+            │           └── Visual accuracy
+            │
+            ├─→ Performance Testing
+            │     │
+            │     ├─→ Load Testing
+            │     │     ├── Simulate 10 concurrent users
+            │     │     ├── Measure response times
+            │     │     └── Identify bottlenecks
+            │     │
+            │     ├─→ API Performance
+            │     │     ├── Test endpoint response times
+            │     │     └── Optimize slow queries
+            │     │
+            │     └─→ Model Inference Speed
+            │           ├── Measure prediction time
+            │           └── Optimize if needed
+            │
+            ├─→ Security Testing
+            │     │
+            │     ├─→ Authentication testing
+            │     ├─→ SQL injection prevention
+            │     ├─→ XSS vulnerability check
+            │     └─→ Session security
+            │
+            └─→ User Acceptance Testing
+                  │
+                  ├─→ Gather stakeholder feedback
+                  ├─→ Conduct usability testing
+                  ├─→ Refine UI/UX
+                  └─→ Obtain sign-off
+                        │
+                        ↓
+                [System Validated & Ready]
+
+
+PHASE 10: DOCUMENTATION & PROJECT CLOSURE
+--------------------------------------------------------------------------------
+
+    [System Validated]
+            │
+            ├─→ Technical Documentation
+            │     │
+            │     ├─→ System Architecture Diagram
+            │     ├─→ Database Schema Documentation
+            │     ├─→ API Reference Guide
+            │     └─→ Model Architecture Details
+            │
+            ├─→ User Documentation
+            │     │
+            │     ├─→ Installation Guide
+            │     ├─→ User Manual
+            │     ├─→ Troubleshooting Guide
+            │     └─→ FAQ Document
+            │
+            ├─→ Project Report
+            │     │
+            │     ├─→ Executive Summary
+            │     ├─→ Methodology Description
+            │     ├─→ Results and Findings
+            │     └─→ Future Enhancements
+            │
+            └─→ Project Presentation
+                  │
+                  ├─→ Create slides
+                  ├─→ Prepare demo
+                  └─→ Document lessons learned
+                        │
+                        ↓
+                [PROJECT COMPLETE]
+
+
+OPERATIONAL WORKFLOW (PRODUCTION)
+================================================================================
+
+    USER ACCESS FLOW:
+    -----------------
+    
+    User → login.html
+      │
+      ├─→ Enter credentials
+      │
+      ├─→ POST /login
+      │     │
+      │     ├─→ Validate credentials (auth_service.py)
+      │     ├─→ Log to login_logs table
+      │     └─→ Create session
+      │
+      ├─→ Redirect to dashboard.html
+      │     │
+      │     └─→ Display Tableau dashboard
+      │           │
+      │           ├─→ View failure probabilities
+      │           ├─→ Check risk indicators
+      │           ├─→ Analyze trends
+      │           └─→ Export reports
+      │
+      └─→ Logout
+            │
+            └─→ Clear session → Return to login
+
+
+    PREDICTION WORKFLOW (AUTOMATED):
+    --------------------------------
+    
+    Scheduled Job (Hourly/Daily)
+      │
+      ├─→ Download latest sensor data
+      │     └── python backend/download_raw_data.py
+      │
+      ├─→ Preprocess new data
+      │     └── Apply saved preprocessing pipeline
+      │
+      ├─→ Generate predictions
+      │     └── python backend/predict_and_export.py
+      │           │
+      │           ├─→ Load LSTM model
+      │           ├─→ Create sequences
+      │           ├─→ Predict failure probabilities
+      │           └─→ Export to CSV
+      │
+      ├─→ Update Tableau dashboard
+      │     └── Refresh data source
+      │
+      └─→ Send alerts (if high risk detected)
+            ├─→ Email notifications
+            └─→ SMS alerts
+
+
+DATA FLOW DIAGRAM
+================================================================================
+
+    Supabase Storage (Raw CSV)
+            │
+            ↓
+    [Download] → data/raw/
+            │
+            ↓
+    [Notebook 01] → Load & Merge
+            │
+            ↓
+    [Notebook 02] → Clean & Normalize
+            │
+            ↓
+    [Notebook 03] → Feature Selection → data/processed/
+            │
+            ↓
+    [Notebook 04] → Create Sequences
+            │
+            ↓
+    [Notebook 05] → Train LSTM → models/motor_lstm_model.h5
+            │
+            ↓
+    [predict_and_export.py] → Generate Predictions
+            │
+            ↓
+    dashboard/motor_failure_predictions.csv
+            │
+            ├─→ Tableau Dashboard (Visualization)
+            │
+            └─→ Supabase Database (Storage)
+
+
+TECHNOLOGY STACK FLOW
+================================================================================
+
+    ┌─────────────────────────────────────────────────────────┐
+    │                    PRESENTATION LAYER                    │
+    │  ┌──────────────────┐         ┌──────────────────┐     │
+    │  │  HTML/CSS/JS     │         │  Tableau Public  │     │
+    │  │  (Frontend)      │         │  (Dashboard)     │     │
+    │  └──────────────────┘         └──────────────────┘     │
+    └────────────────────┬────────────────────┬───────────────┘
+                         │                    │
+    ┌────────────────────┴────────────────────┴───────────────┐
+    │                   APPLICATION LAYER                      │
+    │  ┌──────────────────────────────────────────────────┐   │
+    │  │           Flask API (Python)                     │   │
+    │  │  - Authentication (auth_service.py)              │   │
+    │  │  - API Endpoints (app.py)                        │   │
+    │  │  - Session Management                            │   │
+    │  └──────────────────────────────────────────────────┘   │
+    └────────────────────┬────────────────────────────────────┘
+                         │
+    ┌────────────────────┴────────────────────────────────────┐
+    │                   BUSINESS LOGIC LAYER                   │
+    │  ┌──────────────────────────────────────────────────┐   │
+    │  │  Data Processing (Jupyter Notebooks)             │   │
+    │  │  - Pandas, NumPy                                 │   │
+    │  │  - Data Cleaning & Feature Engineering           │   │
+    │  └──────────────────────────────────────────────────┘   │
+    │  ┌──────────────────────────────────────────────────┐   │
+    │  │  ML Model (TensorFlow/Keras)                     │   │
+    │  │  - LSTM Neural Network                           │   │
+    │  │  - Training & Prediction                         │   │
+    │  └──────────────────────────────────────────────────┘   │
+    └────────────────────┬────────────────────────────────────┘
+                         │
+    ┌────────────────────┴────────────────────────────────────┐
+    │                      DATA LAYER                          │
+    │  ┌──────────────────────────────────────────────────┐   │
+    │  │  Supabase (PostgreSQL)                           │   │
+    │  │  - login_logs table                              │   │
+    │  │  - model_predictions table                       │   │
+    │  │  - Storage Bucket (motor-raw-data)               │   │
+    │  └──────────────────────────────────────────────────┘   │
+    │  ┌──────────────────────────────────────────────────┐   │
+    │  │  Local Storage                                   │   │
+    │  │  - data/raw/                                     │   │
+    │  │  - data/processed/                               │   │
+    │  │  - models/                                       │   │
+    │  │  - dashboard/                                    │   │
+    │  └──────────────────────────────────────────────────┘   │
+    └──────────────────────────────────────────────────────────┘
+
+
+CRITICAL PATH ANALYSIS
+================================================================================
+
+    Sequential Dependencies:
+    ------------------------
+    
+    1. Environment Setup
+         ↓
+    2. Supabase Configuration
+         ↓
+    3. Data Download
+         ↓
+    4. Data Preprocessing (Notebooks 01-03)
+         ↓
+    5. Sequence Creation (Notebook 04)
+         ↓
+    6. Model Training (Notebook 05)
+         ↓
+    7. Prediction Generation
+         ↓
+    8. Web Application Development
+         ↓
+    9. Dashboard Creation
+         ↓
+    10. Testing & Deployment
+    
+    
+    Parallel Activities (Can be done simultaneously):
+    -------------------------------------------------
+    
+    - Frontend Development + Backend API Development
+    - Tableau Dashboard Design + Web Application Development
+    - Documentation + Testing
+
+
+================================================================================
+                        END OF WORKFLOW DIAGRAM
+================================================================================

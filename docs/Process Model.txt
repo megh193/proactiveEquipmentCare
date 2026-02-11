@@ -1,0 +1,288 @@
+================================================================================
+                          PROCESS MODEL
+        PROACTIVE EQUIPMENT CARE: PREDICTIVE MAINTENANCE SYSTEM
+                    LSTM-BASED FAILURE PREDICTION MODEL
+================================================================================
+
+
+1. MODEL OVERVIEW
+================================================================================
+
+Model Name: Motor Failure Prediction LSTM Model
+Model Type: Long Short-Term Memory (LSTM) Neural Network
+Framework: TensorFlow/Keras
+File Location: models/motor_lstm_model.h5
+Purpose: Predict equipment failure probability for proactive maintenance
+
+Problem Statement:
+------------------
+Develop a deep learning model to predict motor equipment failure probability
+based on historical sensor data, enabling maintenance teams to schedule 
+proactive maintenance 24-48 hours before potential failures, thereby reducing
+unplanned downtime and maintenance costs.
+
+Why LSTM?
+---------
+• Excels at learning temporal patterns in time-series sensor data
+• Captures long-term dependencies through memory mechanism
+• Handles sequential data better than traditional ML algorithms
+• Suitable for continuous monitoring applications
+
+
+2. DATA PREPARATION
+================================================================================
+
+Input Features (Sensor Readings):
+----------------------------------
+1. Temperature (°C) - Motor and bearing temperature
+2. Vibration (mm/s) - Multi-axis vibration measurements
+3. Current (Amperes) - Phase currents
+4. Voltage (Volts) - Line voltage
+5. RPM - Motor rotational speed
+6. Load (%) - Motor load percentage
+
+Target Variable:
+----------------
+Binary Classification: Failure (1) or Normal (0)
+Prediction Window: 24-48 hours advance warning
+
+Data Preprocessing Pipeline:
+-----------------------------
+
+Step 1: Data Loading (Notebook 01)
+  • Read CSV files from Supabase storage
+  • Merge multiple datasets by timestamp and motor_id
+  • Sort chronologically
+
+Step 2: Data Cleaning (Notebook 02)
+  • Handle missing values (forward fill, interpolation)
+  • Remove outliers using Z-score and IQR methods
+  • Apply noise reduction filters
+  • Normalize features using Min-Max Scaling (0-1 range)
+
+Step 3: Feature Engineering (Notebook 03)
+  • Select 6-8 primary features
+  • Create derived features (temperature rate of change, vibration trends)
+  • Perform correlation analysis to remove redundancy
+  • Define target variable (failure within 48 hours = 1)
+
+Step 4: Sequence Creation (Notebook 04)
+  • Create time-series sequences using sliding window
+  • Sequence Length: 30 time steps (30 minutes of data)
+  • Input Shape: (samples, 30, 8) - 30 timestamps, 8 features
+  • Output Shape: (samples, 1) - Failure probability
+  • Data Split: 70% Training, 15% Validation, 15% Test
+
+
+3. LSTM MODEL ARCHITECTURE
+================================================================================
+
+Layer Structure:
+----------------
+
+Input Layer:        (batch_size, 30, 8)
+                           ↓
+LSTM Layer 1:       128 units, return_sequences=True
+                           ↓
+Dropout Layer 1:    20% dropout (prevent overfitting)
+                           ↓
+LSTM Layer 2:       64 units, return_sequences=False
+                           ↓
+Dropout Layer 2:    20% dropout
+                           ↓
+Dense Layer:        32 units, ReLU activation
+                           ↓
+Output Layer:       1 unit, Sigmoid activation (probability 0-1)
+
+Total Parameters: ~150,000 trainable parameters
+
+Model Compilation:
+------------------
+• Optimizer: Adam (learning rate = 0.001)
+• Loss Function: Binary Crossentropy
+• Metrics: Accuracy, Precision, Recall, F1-Score, AUC-ROC
+
+
+4. MODEL TRAINING
+================================================================================
+
+Training Configuration:
+-----------------------
+• Epochs: 50-100 (with early stopping)
+• Batch Size: 32
+• Validation Split: 15%
+
+Callbacks:
+----------
+1. Early Stopping: Stop if validation loss doesn't improve for 10 epochs
+2. Model Checkpoint: Save best model based on validation loss
+3. Reduce Learning Rate: Reduce by 50% if plateau detected
+
+Handling Class Imbalance:
+--------------------------
+• Class Weights: Higher weight for failure class (rare events)
+• SMOTE: Synthetic oversampling of minority class
+• Threshold Adjustment: Lower threshold (0.3-0.4) to favor recall
+
+Training Process:
+-----------------
+1. Forward propagation through LSTM layers
+2. Calculate binary crossentropy loss
+3. Backpropagation through time (BPTT)
+4. Update weights using Adam optimizer
+5. Validate on validation set after each epoch
+6. Save best model and stop if no improvement
+
+
+5. MODEL EVALUATION
+================================================================================
+
+Performance Metrics & Targets:
+-------------------------------
+
+Primary Metrics:
+• Recall (Sensitivity): > 90% - CRITICAL (minimize missed failures)
+• Precision: > 75% - Minimize false alarms
+• F1-Score: > 0.80 - Balance between precision and recall
+• Accuracy: > 85% - Overall correctness
+• AUC-ROC: > 0.90 - Threshold-independent performance
+
+Confusion Matrix:
+-----------------
+                Predicted Normal    Predicted Failure
+Actual Normal        TN                   FP
+Actual Failure       FN                   TP
+
+Where:
+• TP (True Positive): Correctly predicted failures - SUCCESS
+• FN (False Negative): Missed failures - CRITICAL TO MINIMIZE
+• FP (False Positive): False alarms - ACCEPTABLE
+• TN (True Negative): Correctly predicted normal operation
+
+Business Priority: Maximize Recall (detect all failures) even if it means
+accepting some false positives, as missed failures are far more costly.
+
+
+6. PREDICTION PROCESS
+================================================================================
+
+Inference Pipeline (predict_and_export.py):
+--------------------------------------------
+
+Step 1: Load trained model
+  model = load_model('models/motor_lstm_model.h5')
+
+Step 2: Prepare input data
+  • Collect latest 30 minutes of sensor readings
+  • Apply preprocessing (normalize, handle missing values)
+  • Create sequence: shape (1, 30, 8)
+
+Step 3: Generate prediction
+  prediction = model.predict(input_sequence)
+  Output: Probability between 0 and 1
+
+Step 4: Risk classification
+  • probability > 0.8  → HIGH RISK (Immediate maintenance)
+  • probability 0.5-0.8 → MEDIUM RISK (Schedule within 1 week)
+  • probability < 0.5  → LOW RISK (Continue monitoring)
+
+Step 5: Export results
+  Save to: dashboard/motor_failure_predictions.csv
+  Columns: motor_id, timestamp, failure_probability, risk_level, 
+           recommended_action
+
+Prediction Frequency:
+---------------------
+• Batch Mode: Hourly/daily scheduled predictions
+• Real-Time Mode: Continuous prediction for critical equipment
+
+
+7. MODEL DEPLOYMENT
+================================================================================
+
+Deployment Architecture:
+------------------------
+
+1. Prediction Service (predict_and_export.py)
+   • Loads LSTM model
+   • Processes sensor data
+   • Generates predictions
+   • Exports to CSV
+
+2. Scheduling System
+   • Automated execution (cron job/task scheduler)
+   • Triggers predictions periodically
+
+3. Dashboard Integration
+   • Tableau reads prediction CSV
+   • Visualizes failure probabilities
+   • Displays risk indicators
+
+4. Alert System
+   • Monitors high-risk predictions
+   • Sends email/SMS notifications
+
+Deployment Workflow:
+--------------------
+Data Collection → Preprocessing → Sequence Creation → Model Prediction →
+Risk Classification → Export Results → Dashboard Update → Alert Generation
+
+
+8. MODEL MAINTENANCE
+================================================================================
+
+Continuous Improvement:
+-----------------------
+1. Monitor actual failures vs predictions
+2. Collect feedback from maintenance team
+3. Update training data with new failure examples
+4. Retrain model quarterly or when performance degrades
+5. Validate and deploy updated model
+
+Retraining Triggers:
+--------------------
+• Scheduled: Every 3 months
+• Performance-based: Recall < 85% or Precision < 70%
+• Data-based: New failure modes or equipment changes
+
+
+9. LIMITATIONS & ASSUMPTIONS
+================================================================================
+
+Limitations:
+------------
+• Requires high-quality historical failure data
+• Prediction window limited to 24-48 hours
+• Cannot predict sudden catastrophic failures
+• Model specific to motor types used in training
+• Deep learning "black box" - limited interpretability
+
+Assumptions:
+------------
+• Sensors are calibrated and functioning correctly
+• Future failures follow similar patterns as historical data
+• Equipment degradation is gradual and detectable
+• Operating conditions remain within normal parameters
+
+
+10. EXPECTED OUTCOMES
+================================================================================
+
+Technical Outcomes:
+-------------------
+• Model accuracy > 85% on test dataset
+• Recall > 90% for failure detection
+• Early failure detection 24-48 hours in advance
+• Automated prediction pipeline
+
+Business Outcomes:
+------------------
+• 30% reduction in unplanned equipment downtime
+• Improved maintenance scheduling efficiency
+• Cost savings through proactive maintenance
+• Enhanced equipment reliability and lifespan
+
+
+================================================================================
+                        END OF PROCESS MODEL
+================================================================================
