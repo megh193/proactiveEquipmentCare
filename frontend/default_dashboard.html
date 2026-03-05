@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proactive Active Care Equipment - Dashboard</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- External CSS -->
+    <link rel="stylesheet" href="default_dashboard.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="logo">Proactive Active Care Equipment</div>
+        <div class="nav-links">
+            <button class="nav-btn analyse-btn"><i class="fa-solid fa-chart-line"></i> Analyse</button>
+            <div class="profile-dropdown">
+                <button class="nav-btn profile-icon-btn">
+                    <img src="default_avatar.svg" alt="Profile" class="profile-avatar" id="nav-profile-img">
+                </button>
+                <div class="dropdown-menu">
+                    <button class="dropdown-item" onclick="window.location.href='profile.html'"><i class="fa-solid fa-user"></i> Profile</button>
+                    <button class="dropdown-item logout-item" onclick="showLogoutPopup()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="dashboard-content">
+        <div class="upload-container">
+            <div class="upload-box">
+                <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                <h2>Upload CSV Data</h2>
+                <p>Drag and drop your file here, or click to browse</p>
+                <input type="file" id="csv-upload" accept=".csv" class="file-input">
+                <label for="csv-upload" class="upload-btn">Browse Files</label>
+            </div>
+        </div>
+    </main>
+
+    <!-- Custom Logout Confirmation Popup -->
+    <div class="logout-overlay" id="logout-overlay">
+        <div class="logout-popup">
+            <div class="popup-icon">
+                <i class="fa-solid fa-circle-exclamation"></i>
+            </div>
+            <h3>Logout Confirmation</h3>
+            <p>Are you sure you want to log out of your session?</p>
+            <div class="popup-actions">
+                <button class="popup-btn btn-no" onclick="hideLogoutPopup()">No, Cancel</button>
+                <button class="popup-btn btn-yes" onclick="performLogout()">Yes, Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="default_dashboard.js"></script>
+</body>
+
+</html>

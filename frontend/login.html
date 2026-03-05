@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="login.css">
 </head>
 
 <body>
@@ -48,7 +48,40 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- OTP Modal -->
+    <div id="otpModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeOtpModal">&times;</span>
+            <h2>Enter Verification Code</h2>
+            <p>A verification code has been sent to your email.</p>
+            <div class="login__field">
+                <i class="login__icon fas fa-key"></i>
+                <input type="text" class="login__input" id="otpInput" placeholder="Enter 6-digit OTP" maxlength="6">
+            </div>
+            <span class="error-message" id="otpError">Incorrect OTP</span>
+            <button class="login__submit" id="verifyOtpBtn">
+                <span class="button__text">Verify</span>
+                <i class="button__icon fas fa-check"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Error Popup Modal -->
+    <div id="errorModal" class="modal">
+        <div class="modal-content error-content">
+            <span class="close-btn" id="closeErrorModal">&times;</span>
+            <div class="error-icon-container">
+                <i class="fas fa-exclamation-circle error-icon"></i>
+            </div>
+            <h2 class="error-title">Error</h2>
+            <p id="errorMessageText">Something went wrong.</p>
+            <button class="login__submit error-btn" id="closeErrorBtn">
+                <span class="button__text">Close</span>
+            </button>
+        </div>
+    </div>
+
+    <script src="login.js"></script>
 
 </body>
 
