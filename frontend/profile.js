@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const userEmail = localStorage.getItem('user_email');
 
     // Default fallback values
-    document.getElementById('user-ip').textContent = 'Unavailable';
+    document.getElementById('user-ip').textContent = 'Loading...';
     const now = new Date();
     document.getElementById('last-login').textContent = now.toLocaleString('en-US', {
         month: 'short',
@@ -13,19 +13,31 @@ document.addEventListener('DOMContentLoaded', () => {
         hour12: true
     });
 
+    // Show user email in profile if element exists
+    const emailEl = document.getElementById('user-email-display');
+    if (emailEl && userEmail) {
+        emailEl.textContent = userEmail;
+    }
+
     if (userEmail) {
-        // Fetch User Details from Backend
+        // Fetch User Details from Backend (IP + last login time from Supabase logs)
         fetch(`http://127.0.0.1:5000/user-details?email=${encodeURIComponent(userEmail)}`)
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
-                    document.getElementById('user-ip').textContent = data.ip_address || 'Unavailable';
-                    if (data.last_login) {
-                        let loginStr = data.last_login;
-                        if (loginStr.endsWith('+00:00')) loginStr = loginStr.slice(0, -6);
-                        else if (loginStr.endsWith('Z')) loginStr = loginStr.slice(0, -1);
+                if (data.success && data.ip_address && data.ip_address !== '127.0.0.1') {
+                    document.getElementById('user-ip').textContent = data.ip_address;
+                } else {
+                    // Fallback: fetch public IP from ipify
+                    fetchPublicIP();
+                }
 
-                        const loginDate = new Date(loginStr);
+                if (data.last_login) {
+                    let loginStr = data.last_login;
+                    if (loginStr.endsWith('+00:00')) loginStr = loginStr.slice(0, -6);
+                    else if (loginStr.endsWith('Z')) loginStr = loginStr.slice(0, -1);
+
+                    const loginDate = new Date(loginStr);
+                    if (!isNaN(loginDate.getTime())) {
                         document.getElementById('last-login').textContent = loginDate.toLocaleString('en-US', {
                             month: 'short',
                             day: 'numeric',
@@ -38,11 +50,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             })
             .catch(err => {
-                console.error('Error fetching user details:', err);
+                console.error('Error fetching user details from backend:', err);
+                // Fallback to public IP if backend is unreachable
+                fetchPublicIP();
+            });
+    } else {
+        // No email in storage — still try to show public IP
+        fetchPublicIP();
+    }
+
+    // Fetch public IP via ipify as a reliable fallback/primary source
+    function fetchPublicIP() {
+        fetch('https://api.ipify.org?format=json')
+            .then(res => res.json())
+            .then(ipData => {
+                document.getElementById('user-ip').textContent = ipData.ip || 'Unavailable';
+            })
+            .catch(() => {
+                document.getElementById('user-ip').textContent = 'Unavailable';
             });
     }
 
-    // 3. Profile Image Upload Preview
+    // Profile Image Upload Preview
     const profileUpload = document.getElementById('profile-upload');
     const mainProfileImg = document.getElementById('main-profile-img');
     const navProfileImg = document.getElementById('nav-profile-img');
@@ -60,11 +89,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const reader = new FileReader();
 
             reader.onload = function(e) {
-                // Update both main profile image and navbar thumbnail
                 const newImgData = e.target.result;
                 mainProfileImg.src = newImgData;
                 navProfileImg.src = newImgData;
-                // Save to localStorage
                 localStorage.setItem('profileImage', newImgData);
             };
 
@@ -77,8 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!e.target.matches('.profile-icon-btn') && !e.target.closest('.profile-icon-btn')) {
             const dropdown = document.querySelector('.dropdown-menu');
             if (dropdown && dropdown.style.opacity === '1') {
-                // Dropdown is handled by CSS hover, but this ensures clicking outside 
-                // doesn't cause weird states on mobile if we ever add click-to-open.
+                // Dropdown is handled by CSS hover
             }
         }
     });
