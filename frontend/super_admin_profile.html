@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin Profile - Proactive Active Care Equipment</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- External CSS -->
+    <link rel="stylesheet" href="super_admin_profile.css">
+</head>
+<body>
+    <!-- Top Navbar Consistent with Dashboard -->
+    <nav class="navbar">
+        <div class="logo">Proactive Active Care Equipment</div>
+        <div class="nav-links">
+            <button class="nav-btn analyse-btn" onclick="window.location.href='super_admin_dashboard.html'"><i class="fa-solid fa-house"></i> Home</button>
+            <button class="nav-btn manage-users-nav-btn" onclick="window.location.href='manage_users.html'"><i class="fa-solid fa-users-gear"></i> Manage Users</button>
+            <button class="nav-btn analyse-btn" onclick="alert('Analyze functionality pending')"><i class="fa-solid fa-chart-line"></i> Analyse</button>
+            <div class="profile-dropdown">
+                <button class="nav-btn profile-icon-btn">
+                    <img src="default_avatar.svg" alt="Profile" class="profile-avatar" id="nav-profile-img">
+                </button>
+                <div class="dropdown-menu">
+                    <button class="dropdown-item" onclick="window.location.href='super_admin_profile.html'"><i class="fa-solid fa-user"></i> Profile</button>
+                    <button class="dropdown-item logout-item" onclick="showLogoutPopup()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Profile Content -->
+    <main class="profile-content">
+        <div class="profile-card">
+            <div class="profile-header">
+                <h2>User Profile</h2>
+                <div class="divider"></div>
+            </div>
+            
+            <div class="profile-body">
+                <div class="profile-image-section">
+                    <div class="image-wrapper">
+                        <img src="default_avatar.svg" alt="User Profile" class="main-profile-img" id="main-profile-img">
+                        <label for="profile-upload" class="upload-overlay">
+                            <i class="fa-solid fa-camera"></i>
+                            <span>Change</span>
+                        </label>
+                        <input type="file" id="profile-upload" accept="image/*" class="hidden-input">
+                    </div>
+                </div>
+
+                <div class="profile-details">
+                    <div class="detail-item">
+                        <div class="detail-icon"><i class="fa-solid fa-user-shield"></i></div>
+                        <div class="detail-text">
+                            <span class="detail-label">Role</span>
+                            <span class="detail-value">Super Admin</span>
+                        </div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-icon"><i class="fa-solid fa-network-wired"></i></div>
+                        <div class="detail-text">
+                            <span class="detail-label">IP Address</span>
+                            <span class="detail-value" id="user-ip">Loading...</span>
+                        </div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-icon"><i class="fa-regular fa-clock"></i></div>
+                        <div class="detail-text">
+                            <span class="detail-label">Last Login</span>
+                            <span class="detail-value" id="last-login">Just now</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-actions">
+                <button class="action-btn home-btn" onclick="window.history.back()">
+                    <i class="fa-solid fa-house"></i> Go Back
+                </button>
+                <button class="action-btn logout-btn" onclick="showLogoutPopup()">
+                    <i class="fa-solid fa-right-from-bracket"></i> Logout
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Custom Logout Confirmation Popup -->
+    <div class="logout-overlay" id="logout-overlay">
+        <div class="logout-popup">
+            <div class="popup-icon">
+                <i class="fa-solid fa-circle-exclamation"></i>
+            </div>
+            <h3>Logout Confirmation</h3>
+            <p>Are you sure you want to log out of your session?</p>
+            <div class="popup-actions">
+                <button class="popup-btn btn-no" onclick="hideLogoutPopup()">No, Cancel</button>
+                <button class="popup-btn btn-yes" onclick="performLogout()">Yes, Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- External JS -->
+    <script src="super_admin_profile.js"></script>
+</body>
+</html>
+

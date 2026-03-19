@@ -1,4 +1,4 @@
-document.getElementById('loginForm').addEventListener('submit', async function(e) {
+document.getElementById('loginForm').addEventListener('submit', async function (e) {
     e.preventDefault();
 
     const emailInput = document.getElementById('email');
@@ -59,13 +59,17 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
                     loginSuccess(emailVal);
                 }
             } else {
-                showErrorPopup(data.message || 'Authentication failed');
+                if (data.message) {
+                    showErrorPopup(data.message);
+                } else {
+                    showErrorPopup('Authentication failed');
+                }
                 submitBtn.disabled = false;
                 submitBtn.querySelector('.button__text').innerText = 'Login';
             }
         } catch (error) {
             console.error('Login Error:', error);
-            showErrorPopup('Network Error. Please try again.');
+            showErrorPopup('Network error');
             submitBtn.disabled = false;
             submitBtn.querySelector('.button__text').innerText = 'Login';
         }
@@ -73,7 +77,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
 });
 
 // OTP Verification Logic
-document.getElementById('verifyOtpBtn').addEventListener('click', async function() {
+document.getElementById('verifyOtpBtn').addEventListener('click', async function () {
     const otpInput = document.getElementById('otpInput');
     const otp = otpInput.value.trim();
     const email = document.getElementById('email').value.trim();
@@ -100,7 +104,7 @@ document.getElementById('verifyOtpBtn').addEventListener('click', async function
         const data = await response.json();
 
         if (response.ok) {
-            loginSuccess(email);
+            loginSuccess(data.email || email, data.role);
         } else {
             // Updated to show Popup
             showErrorPopup(data.message || "Incorrect OTP");
@@ -115,11 +119,9 @@ document.getElementById('verifyOtpBtn').addEventListener('click', async function
     }
 });
 
-function loginSuccess(emailVal) {
-    // Determine mock role based on email for demo
-    let role = 'viewer';
-    if (emailVal.toLowerCase().includes('admin')) role = 'admin';
-    else if (emailVal.toLowerCase().includes('analyst')) role = 'analyst';
+function loginSuccess(emailVal, roleVal) {
+    // Default to admin if role wasn't explicitly returned
+    let role = roleVal || 'admin';
 
     localStorage.setItem('user_email', emailVal);
     localStorage.setItem('role', role);
@@ -128,24 +130,47 @@ function loginSuccess(emailVal) {
 }
 
 // Close modal logic
-document.getElementById('closeOtpModal').addEventListener('click', function() {
+document.getElementById('closeOtpModal').addEventListener('click', function () {
     document.getElementById('otpModal').style.display = 'none';
 });
 
 // Clear OTP error on input
-document.getElementById('otpInput').addEventListener('input', function() {
+document.getElementById('otpInput').addEventListener('input', function () {
     document.getElementById('otpError').classList.remove('visible');
 });
 
 async function loadDashboard(role) {
-    window.location.href = 'default_dashboard.html';
+    if (role === 'super_admin') {
+        window.location.href = 'super_admin_dashboard.html';
+    } else {
+        window.location.href = 'admin_dashboard.html';
+    }
 }
 
-function logout() {
+async function logout() {
+    const email = localStorage.getItem('user_email');
+    if (email) {
+        try {
+            await fetch('http://127.0.0.1:5000/api/logout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email })
+            });
+        } catch (error) {
+            console.error('Logout API error:', error);
+        }
+    }
     localStorage.removeItem('user_email');
     localStorage.removeItem('role');
     location.reload();
 }
+
+window.addEventListener('beforeunload', function (e) {
+    const email = localStorage.getItem('user_email');
+    if (email) {
+        navigator.sendBeacon('http://127.0.0.1:5000/api/logout', JSON.stringify({ email: email }));
+    }
+});
 
 function showError(inputElement, errorElement, message) {
     inputElement.classList.add('input-error');
@@ -154,7 +179,7 @@ function showError(inputElement, errorElement, message) {
 }
 
 document.querySelectorAll('.login__input').forEach(input => {
-    input.addEventListener('input', function() {
+    input.addEventListener('input', function () {
         this.classList.remove('input-error');
         const errorSpan = this.parentElement.querySelector('.error-message');
         if (errorSpan) errorSpan.classList.remove('visible');
@@ -175,16 +200,16 @@ function showErrorPopup(message) {
 }
 
 // Close Error Modal
-document.getElementById('closeErrorModal').addEventListener('click', function() {
+document.getElementById('closeErrorModal').addEventListener('click', function () {
     document.getElementById('errorModal').style.display = 'none';
 });
 
-document.getElementById('closeErrorBtn').addEventListener('click', function() {
+document.getElementById('closeErrorBtn').addEventListener('click', function () {
     document.getElementById('errorModal').style.display = 'none';
 });
 
 // Close modal when clicking outside
-window.addEventListener('click', function(event) {
+window.addEventListener('click', function (event) {
     const errorModal = document.getElementById('errorModal');
     if (event.target == errorModal) {
         errorModal.style.display = 'none';

@@ -1,37 +1,17 @@
 import os
 import uuid
+import socket
 import smtplib
 import ssl
 import random
 import string
 import time
-from datetime import datetime
 import re
-import socket
-from supabase import create_client, ClientOptions
+from datetime import datetime, timezone
+from supabase_client import supabase
 from dotenv import load_dotenv
 
-load_dotenv()
-
-# Initialize Supabase client directly in auth_service
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
-supabase = None
-if SUPABASE_URL and SUPABASE_KEY:
-    options = ClientOptions(postgrest_client_timeout=5)
-    supabase = create_client(SUPABASE_URL, SUPABASE_KEY, options=options)
-
-def get_device_ip(request_ip):
-    """Retrieve the actual local device IP (e.g. 10.x.x.x) which is used in this project setup."""
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        # connect to a public DNS server to find the outbound network interface IP
-        s.connect(("8.8.8.8", 80))
-        device_ip = s.getsockname()[0]
-        s.close()
-        return device_ip
-    except Exception:
-        return request_ip
+load_dotenv(override=True)
 
 # Temporary OTP storage (In production, use Redis or a database)
 otp_storage = {}
@@ -54,15 +34,14 @@ Subject: Your Login Verification Code
 
 Your verification code is: {otp}
 
-This code will expire in 5 minutes.
+This code will expire in 2 minutes.
 """
 
     context = ssl.create_default_context()
     try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context, timeout=10) as server:
             server.login(sender_email, password)
             server.sendmail(sender_email, receiver_email, message)
-        print(f"OTP email sent successfully to {receiver_email}")
         return True
     except Exception as e:
         print(f"Failed to send email: {e}")
@@ -84,8 +63,8 @@ def verify_otp(email, entered_otp):
     timestamp = data["timestamp"]
     stored_otp = data["otp"]
     
-    # Check expiration (5 minutes = 300 seconds)
-    if time.time() - timestamp > 300:
+    # Check expiration (2 minutes = 120 seconds)
+    if time.time() - timestamp > 120:
         del otp_storage[email]
         return False, "OTP expired."
         
@@ -95,52 +74,100 @@ def verify_otp(email, entered_otp):
     
     return False, "Incorrect OTP."
 
+
 def authenticate_user(email, password):
-    """Authenticate user against credentials stored in .env."""
+    """
+    Two-tier authentication:
+    1. Try Supabase Auth (sign_in_with_password) — works for users created via the new dashboard.
+    2. Fallback to users_database plaintext check — works for pre-existing users not yet in Supabase Auth.
+    On success, returns {"email": ..., "role": ...}. Returns None on failure.
+    """
     # Validate email format
     email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     if not re.match(email_regex, email):
-        return None  # Invalid format
+        return None
 
-    # Fetch admin credentials from .env
-    # Format: email1:pass1,email2:pass2
-    admin_credentials_str = os.getenv("ADMIN_CREDENTIALS", "prathamprajapati133@gmail.com:ibm@1234")
-    
-    # Parse the credentials into a dictionary
-    valid_users = {}
-    for pair in admin_credentials_str.split(','):
-        if ':' in pair:
-            e, p = pair.split(':', 1)
-            valid_users[e.strip()] = p.strip()
-    
-    # Check against valid admin credentials
-    if email in valid_users and password == valid_users[email]:
-        return {"email": email, "role": "admin"}
-    
+    user_table = os.getenv("SUPABASE_USER_TABLE_NAME", "users_database")
+
+    # ── Tier 1: Supabase Auth ──────────────────────────────
+    supabase_auth_ok = False
+    try:
+        auth_response = supabase.auth.sign_in_with_password({
+            "email": email,
+            "password": password
+        })
+        if auth_response and auth_response.user:
+            supabase_auth_ok = True
+    except Exception as e:
+        print(f"Supabase Auth sign-in failed (will try DB fallback): {e}")
+
+    if supabase_auth_ok:
+        # Fetch role from users_database
+        try:
+            response = supabase.table(user_table).select("email, Role").eq("email", email).execute()
+            if response.data and len(response.data) > 0:
+                user = response.data[0]
+                role_val = user.get("Role") or user.get("role") or "admin"
+                normalized_role = role_val.lower().strip().replace(" ", "_")
+                if normalized_role == "superadmin":
+                    normalized_role = "super_admin"
+                return {"email": email, "role": normalized_role}
+        except Exception as e:
+            print(f"Error fetching role after Supabase Auth success: {e}")
+        return None
+
+    # ── Tier 2: Fallback — DB plaintext password check ────
+    # Handles existing users who pre-date Supabase Auth migration.
+    try:
+        response = supabase.table(user_table).select("email, Role, password").eq("email", email).execute()
+        users = response.data
+
+        if users and len(users) > 0:
+            user = users[0]
+            if user.get("password") == password:
+                role_val = user.get("Role") or user.get("role") or "admin"
+                normalized_role = role_val.lower().strip().replace(" ", "_")
+                if normalized_role == "superadmin":
+                    normalized_role = "super_admin"
+                print(f"[Auth] User {email} authenticated via DB fallback (not yet in Supabase Auth).")
+                return {"email": email, "role": normalized_role}
+    except Exception as e:
+        print(f"DB fallback auth error: {e}")
+
     return None
 
-def log_login(user_email, ip_address, status="Success"):
-    """Log a login attempt to the Supabase login_logs table."""
+
+def log_login(user_email, ip_address, dashboard_accessed="Tableau Dashboard", status="Success"):
     try:
+        # Resolve actual device IP
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            device_ip = s.getsockname()[0]
+            s.close()
+        except Exception:
+            device_ip = ip_address
+
         # Get table name from environment
         table_name = os.getenv('SUPABASE_TABLE_NAME', 'login_logs')
         
-        # Parse admin emails to give them a deterministic static ID
-        admin_credentials_str = os.getenv("ADMIN_CREDENTIALS", "prathamprajapati133@gmail.com:ibm@1234")
-        admin_emails = [pair.split(':')[0].strip() for pair in admin_credentials_str.split(',') if ':' in pair]
-
-        # Use the request IP directly (passed in from Flask's request.remote_addr)
-        log_ip = ip_address if ip_address else "Unknown"
-
-        result = supabase.table(table_name).insert({
+        # Fetch User from users_database
+        user_table = os.getenv("SUPABASE_USER_TABLE_NAME", "users_database")
+        user_res = supabase.table(user_table).select("id, Role").eq("email", user_email).execute()
+        
+        user_id = str(uuid.uuid4())  # Default fallback
+        if user_res.data and len(user_res.data) > 0:
+            db_id = user_res.data[0].get("id")
+            if db_id:
+                user_id = str(db_id)
+        
+        supabase.table(table_name).insert({
             "user_email": user_email,
-            "user_id": "admin_id" if user_email in admin_emails else str(uuid.uuid4()),
+            "user_id": user_id,
             "status": status,
-            "ip_address": log_ip,
-            "created_at": datetime.now().isoformat()
+            "ip_address": device_ip,
+            "created_at": datetime.now(timezone.utc).isoformat()
         }).execute()
-
-        print(f"Login logged: {user_email} | {status} | IP: {log_ip} | Result: {result}")
-
+        
     except Exception as e:
-        print(f"Logging failed for {user_email}: {type(e).__name__}: {e}")
+        print(f"Logging failed: {e}")
