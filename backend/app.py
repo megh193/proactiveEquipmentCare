@@ -124,29 +124,28 @@ def add_user():
     email = data.get('email')
     password = data.get('password')
     role = data.get('role', 'admin')
-    # Force status to inactive on user creation
-    status = 'inactive'
     
     if not name or not email or not password:
         return jsonify({"success": False, "message": "Name, email, and password are required"}), 400
     
+    # Step 1: Try to create user in Supabase Auth (optional — continues even if it fails)
     auth_uid = None
     try:
-        # Step 1: Create user in Supabase Auth
         auth_response = supabase.auth.admin.create_user({
             "email": email,
             "password": password,
             "email_confirm": True
         })
-        if not auth_response or not auth_response.user:
-            return jsonify({"success": False, "message": "Failed to create user in Supabase Auth"}), 500
-        auth_uid = auth_response.user.id
+        if auth_response and auth_response.user:
+            auth_uid = auth_response.user.id
+            print(f"[Auth] User {email} created in Supabase Auth (uid={auth_uid})")
     except Exception as e:
-        print(f"Supabase Auth create_user failed: {e}")
-        return jsonify({"success": False, "message": f"Auth error: {str(e)}"}), 500
+        # Non-fatal: log the warning but continue to DB insert.
+        # The user can still log in via the DB-password fallback.
+        print(f"[Warning] Supabase Auth create_user failed (continuing anyway): {e}")
 
     try:
-        # Step 2: Insert into users_database (no status column)
+        # Step 2: Insert into users_database
         table_name = os.getenv("SUPABASE_USER_TABLE_NAME", "users_database")
         response = supabase.table(table_name).insert({
             "name": name,
@@ -158,10 +157,11 @@ def add_user():
         user_data = response.data[0]
         if "Role" in user_data:
             user_data["role"] = user_data.pop("Role")
-            
-        return jsonify({"success": True, "message": "User added successfully", "user": user_data})
+        
+        auth_note = " (registered in Supabase Auth)" if auth_uid else " (DB-only — Auth registration skipped)"
+        return jsonify({"success": True, "message": f"User added successfully{auth_note}", "user": user_data})
     except Exception as e:
-        # Rollback: delete the Auth user we just created
+        # Rollback: delete the Auth user if we created one
         if auth_uid:
             try:
                 supabase.auth.admin.delete_user(auth_uid)
@@ -272,13 +272,23 @@ def get_profile():
         return jsonify({"success": False, "message": "Email is required"}), 400
         
     try:
-        table_name = os.getenv('SUPABASE_TABLE_NAME', 'login_logs')
-        # Fetch the latest login log for the user
-        response = supabase.table(table_name).select("*").eq("user_email", email).order("created_at", desc=True).limit(1).execute()
+        # Fetch the latest login log for the user (IP address + last login time)
+        log_table = os.getenv('SUPABASE_TABLE_NAME', 'login_logs')
+        log_response = supabase.table(log_table).select("*").eq("user_email", email).order("created_at", desc=True).limit(1).execute()
         
         last_login_data = None
-        if response.data and len(response.data) > 0:
-            last_login_data = response.data[0]
+        if log_response.data and len(log_response.data) > 0:
+            last_login_data = log_response.data[0]
+        
+        # Fetch account creation timestamp from users_database
+        account_created_at = None
+        try:
+            user_table = os.getenv('SUPABASE_USER_TABLE_NAME', 'users_database')
+            user_response = supabase.table(user_table).select("created_at").eq("email", email).limit(1).execute()
+            if user_response.data and len(user_response.data) > 0:
+                account_created_at = user_response.data[0].get('created_at')
+        except Exception as ue:
+            print(f"Could not fetch account created_at: {ue}")
             
         profiles = get_profiles()
         user_avatar = profiles.get(email, {}).get('avatar', None)
@@ -286,6 +296,7 @@ def get_profile():
         return jsonify({
             "success": True, 
             "last_login": last_login_data,
+            "account_created_at": account_created_at,
             "avatar": user_avatar
         })
     except Exception as e:
