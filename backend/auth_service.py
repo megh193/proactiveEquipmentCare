@@ -151,23 +151,16 @@ def log_login(user_email, ip_address, dashboard_accessed="Tableau Dashboard", st
         # Get table name from environment
         table_name = os.getenv('SUPABASE_TABLE_NAME', 'login_logs')
         
-        # Fetch User from users_database
-        user_table = os.getenv("SUPABASE_USER_TABLE_NAME", "users_database")
-        user_res = supabase.table(user_table).select("id, Role").eq("email", user_email).execute()
-        
-        user_id = str(uuid.uuid4())  # Default fallback
-        if user_res.data and len(user_res.data) > 0:
-            db_id = user_res.data[0].get("id")
-            if db_id:
-                user_id = str(db_id)
-        
-        supabase.table(table_name).insert({
+        # Insert log — omit user_id and created_at to avoid FK/column conflicts.
+        # Supabase table defaults handle created_at automatically.
+        insert_data = {
             "user_email": user_email,
-            "user_id": user_id,
             "status": status,
             "ip_address": device_ip,
-            "created_at": datetime.now(timezone.utc).isoformat()
-        }).execute()
+        }
+        
+        result = supabase.table(table_name).insert(insert_data).execute()
+        print(f"[Log] Login logged for {user_email} ({status}) from IP {device_ip}")
         
     except Exception as e:
         print(f"Logging failed: {e}")

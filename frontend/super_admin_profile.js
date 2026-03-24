@@ -5,12 +5,12 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    // Update IP and Time
+                    // ── IP Address & Last Login (from login_logs) ──
                     if (data.last_login) {
                         document.getElementById('user-ip').textContent = data.last_login.ip_address || 'Unavailable';
 
                         let dateStr = data.last_login.created_at;
-                        if (!dateStr.endsWith('Z') && !dateStr.includes('+')) {
+                        if (dateStr && !dateStr.endsWith('Z') && !dateStr.includes('+')) {
                             dateStr += 'Z';
                         }
                         const dateObj = new Date(dateStr);
@@ -28,7 +28,23 @@ document.addEventListener('DOMContentLoaded', () => {
                         document.getElementById('last-login').textContent = 'No records found';
                     }
 
-                    // Update Avatar if custom one exists
+                    // ── Account Creation Timestamp (from users_database) ──
+                    const createdEl = document.getElementById('account-created');
+                    if (createdEl) {
+                        if (data.account_created_at) {
+                            let cDateStr = data.account_created_at;
+                            if (!cDateStr.endsWith('Z') && !cDateStr.includes('+')) cDateStr += 'Z';
+                            const cDate = new Date(cDateStr);
+                            createdEl.textContent = cDate.toLocaleString('en-US', {
+                                month: 'short', day: 'numeric', year: 'numeric',
+                                hour: 'numeric', minute: '2-digit', hour12: true
+                            });
+                        } else {
+                            createdEl.textContent = 'N/A';
+                        }
+                    }
+
+                    // ── Avatar ──
                     if (data.avatar) {
                         const mainProfileImg = document.getElementById('main-profile-img');
                         const navProfileImg = document.getElementById('nav-profile-img');
