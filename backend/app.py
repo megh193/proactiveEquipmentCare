@@ -1,11 +1,14 @@
 import os
 import sys
+import io
 import asyncio
+import numpy as np
+import pandas as pd
 
 if sys.platform == 'win32':
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from auth_service import authenticate_user, log_login, generate_otp, send_otp_email, store_otp, verify_otp
 from dotenv import load_dotenv
@@ -14,6 +17,25 @@ load_dotenv(override=True)
 
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 CORS(app)
+
+# Lazy-load LSTM model once
+_model = None
+def get_model():
+    global _model
+    if _model is None:
+        from tensorflow import keras
+        model_path = os.getenv('MODEL_PATH')
+        _model = keras.models.load_model(model_path)
+    return _model
+
+FEATURE_COLS = [
+    'Air temperature [K]',
+    'Process temperature [K]',
+    'Rotational speed [rpm]',
+    'Torque [Nm]',
+    'Tool wear [min]'
+]
+SEQUENCE_LENGTH = int(os.getenv('SEQUENCE_LENGTH', 30))
 
 @app.route('/')
 def index():
@@ -310,6 +332,79 @@ def update_avatar():
         return jsonify({"success": True, "message": "Avatar updated successfully"})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    if 'file' not in request.files:
+        return jsonify({"success": False, "message": "No file uploaded"}), 400
+
+    file = request.files['file']
+    if not file.filename.lower().endswith('.csv'):
+        return jsonify({"success": False, "message": "Only CSV files are supported"}), 400
+
+    try:
+        data = pd.read_csv(file)
+
+        missing = [c for c in FEATURE_COLS if c not in data.columns]
+        if missing:
+            return jsonify({"success": False, "message": f"Missing columns: {missing}"}), 400
+
+        if len(data) < SEQUENCE_LENGTH:
+            return jsonify({"success": False, "message": f"Need at least {SEQUENCE_LENGTH} rows of data"}), 400
+
+        X = data[FEATURE_COLS].values
+        sequences, indices = [], []
+        for i in range(len(X) - SEQUENCE_LENGTH + 1):
+            sequences.append(X[i:i + SEQUENCE_LENGTH])
+            indices.append(i + SEQUENCE_LENGTH - 1)
+
+        X_seq = np.array(sequences)
+        model = get_model()
+        preds = model.predict(X_seq, verbose=0).flatten()
+
+        result_df = pd.DataFrame({
+            'timestamp': data['Timestamp'].iloc[indices].values if 'Timestamp' in data.columns else indices,
+            'motor_id': data['Product ID'].iloc[indices].values if 'Product ID' in data.columns else [f'Motor_{i}' for i in indices],
+            'failure_probability': preds,
+        })
+
+        # Sort by timestamp then motor_id to match reference output
+        result_df = result_df.sort_values(['timestamp', 'motor_id']).reset_index(drop=True)
+
+        download = request.args.get('download', 'false').lower() == 'true'
+        if download:
+            buf = io.StringIO()
+            result_df.to_csv(buf, index=False)
+            buf.seek(0)
+            return send_file(
+                io.BytesIO(buf.getvalue().encode()),
+                mimetype='text/csv',
+                as_attachment=True,
+                download_name='predictions.csv'
+            )
+
+        # For JSON (analyse page charts) also include sensor cols
+        json_df = pd.DataFrame({
+            'timestamp': data['Timestamp'].iloc[indices].values if 'Timestamp' in data.columns else indices,
+            'motor_id': data['Product ID'].iloc[indices].values if 'Product ID' in data.columns else [f'Motor_{i}' for i in indices],
+            'failure_probability': (preds * 100).round(4),
+            'air_temp': data['Air temperature [K]'].iloc[indices].values,
+            'process_temp': data['Process temperature [K]'].iloc[indices].values,
+            'rotational_speed': data['Rotational speed [rpm]'].iloc[indices].values,
+            'torque': data['Torque [Nm]'].iloc[indices].values,
+            'tool_wear': data['Tool wear [min]'].iloc[indices].values,
+        })
+
+        return jsonify({
+            "success": True,
+            "total_rows": len(json_df),
+            "predictions": json_df.to_dict(orient='records')
+        })
+
+    except Exception as e:
+        print(f"Prediction error: {type(e).__name__}: {e}")
+        return jsonify({"success": False, "message": f"Prediction failed: {str(e)}"}), 500
+
 
 if __name__ == '__main__':
     debug_mode = os.getenv('FLASK_DEBUG', 'True') == 'True'

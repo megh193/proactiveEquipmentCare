@@ -1,0 +1,28 @@
+What "Tool Wear" means:
+
+It's measured in minutes — how long a tool has been in use without being replaced.
+A brand new tool = 0 minutes wear, The longer a tool runs, the higher the wear value.
+
+----------
+
+Air Temp vs Failure Probability : 
+
+Shows the relationship between how hot the surrounding air is (in Kelvin) and how likely the motor is to fail.
+The idea is — as air temperature rises, the motor runs hotter, which increases failure risk.
+The scatter plot lets you visually spot if high temperature clusters have higher failure probability dots.
+
+----------
+
+Torque vs Rotational Speed
+
+Shows the relationship between how much rotational force the motor is applying (Nm) and how fast it's spinning (rpm).
+These two are inversely related in motors — when speed goes up, torque usually goes down and vice versa.
+Dots are colored by risk level (red = high risk, orange = medium, blue = low) so you can see which speed/torque combinations are dangerous.
+
+----------
+
+Those are not hardcoded limits for — Chart.js automatically calculates them from your actual data. Here's how:
+
+It takes the minimum and maximum values in your uploaded CSV for that column
+
+Then adds a small padding buffer (about 5-10%) beyond the min/max so dots don't sit right on the edge
