@@ -18,13 +18,15 @@ load_dotenv(override=True)
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 CORS(app)
 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 # Lazy-load LSTM model once
 _model = None
 def get_model():
     global _model
     if _model is None:
         from tensorflow import keras
-        model_path = os.getenv('MODEL_PATH')
+        model_path = os.getenv('MODEL_PATH', os.path.join(BASE_DIR, 'models', 'motor_lstm_model.h5'))
         _model = keras.models.load_model(model_path)
     return _model
 
