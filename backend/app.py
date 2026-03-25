@@ -10,6 +10,7 @@ if sys.platform == 'win32':
 
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
+import bcrypt
 from auth_service import authenticate_user, log_login, generate_otp, send_otp_email, store_otp, verify_otp
 from dotenv import load_dotenv
 
@@ -66,17 +67,9 @@ def login():
     user = authenticate_user(email, password)
     
     if user:
-        # Step 1 Success: Generate and Send OTP
         otp = generate_otp()
-        # Enhanced store_otp to hold user role
-        from auth_service import otp_storage
-        import time
-        otp_storage[email] = {
-            "otp": otp,
-            "timestamp": time.time(),
-            "role": user["role"]
-        }
-        
+        print(f"[Login] Auth success for {email}, role={user['role']}, otp={otp}")
+        store_otp(email, otp, user["role"])
         email_sent = send_otp_email(email, otp)
         
         if email_sent:
@@ -94,10 +87,11 @@ def verify_otp_route():
     otp = data.get('otp')
     ip_address = request.remote_addr
     
-    # Grab role before verification clears the storage
-    from auth_service import otp_storage
-    role = otp_storage.get(email, {}).get("role", "admin")
-    
+    # Fetch role before OTP is deleted on verification
+    from supabase_client import supabase as _sb
+    _otp_row = _sb.table("otp_store").select("role").eq("email", email).execute()
+    role = _otp_row.data[0]["role"] if _otp_row.data else "admin"
+
     is_valid, message = verify_otp(email, otp)
     
     if is_valid:
@@ -171,10 +165,11 @@ def add_user():
     try:
         # Step 2: Insert into users_database
         table_name = os.getenv("SUPABASE_USER_TABLE_NAME", "users_database")
+        hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
         response = supabase.table(table_name).insert({
             "name": name,
             "email": email,
-            "password": password,
+            "password": hashed_pw,
             "Role": role
         }).execute()
         
@@ -202,7 +197,7 @@ def update_user(user_id):
     if 'email' in data:
         update_data['email'] = data['email']
     if 'password' in data and data['password']:
-        update_data['password'] = data['password']
+        update_data['password'] = bcrypt.hashpw(data['password'].encode(), bcrypt.gensalt()).decode()
     if 'role' in data:
         update_data['Role'] = data['role']
     if 'status' in data:
