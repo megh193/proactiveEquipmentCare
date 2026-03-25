@@ -94,16 +94,24 @@ def authenticate_user(email, password):
     user_table = os.getenv("SUPABASE_USER_TABLE_NAME", "users_database")
 
     # ── Tier 1: Supabase Auth ──────────────────────────────
+    # Skip Tier 1 if user has updated their password via the app (DB is source of truth)
     supabase_auth_ok = False
     try:
-        auth_response = supabase.auth.sign_in_with_password({
-            "email": email,
-            "password": password
-        })
-        if auth_response and auth_response.user:
-            supabase_auth_ok = True
-    except Exception as e:
-        print(f"Supabase Auth sign-in failed (will try DB fallback): {e}")
+        pw_check = supabase.table(user_table).select("password_updated").eq("email", email).execute()
+        password_updated = pw_check.data[0].get("password_updated", False) if pw_check.data else False
+    except Exception:
+        password_updated = False
+
+    if not password_updated:
+        try:
+            auth_response = supabase.auth.sign_in_with_password({
+                "email": email,
+                "password": password
+            })
+            if auth_response and auth_response.user:
+                supabase_auth_ok = True
+        except Exception as e:
+            print(f"Supabase Auth sign-in failed (will try DB fallback): {e}")
 
     if supabase_auth_ok:
         # Fetch role from users_database

@@ -321,6 +321,54 @@ def get_profile():
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
+@app.route('/api/change-password/request-otp', methods=['POST'])
+def change_password_request_otp():
+    data = request.json
+    email = data.get('email')
+    if not email:
+        return jsonify({"success": False, "message": "Email is required"}), 400
+
+    # Verify user exists
+    table_name = os.getenv("SUPABASE_USER_TABLE_NAME", "users_database")
+    res = supabase.table(table_name).select("email").eq("email", email).execute()
+    if not res.data:
+        return jsonify({"success": False, "message": "User not found"}), 404
+
+    otp = generate_otp()
+    store_otp(email, otp, "change_password")
+    email_sent = send_otp_email(email, otp)
+    if email_sent:
+        return jsonify({"success": True, "message": "OTP sent to your email"})
+    return jsonify({"success": False, "message": "Failed to send OTP"}), 500
+
+
+@app.route('/api/change-password/verify', methods=['POST'])
+def change_password_verify():
+    data = request.json
+    email = data.get('email')
+    otp = data.get('otp')
+    new_password = data.get('new_password')
+
+    if not email or not otp or not new_password:
+        return jsonify({"success": False, "message": "Email, OTP, and new password are required"}), 400
+
+    is_valid, message = verify_otp(email, otp)
+    if not is_valid:
+        return jsonify({"success": False, "message": message}), 401
+
+    hashed_pw = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt()).decode()
+    table_name = os.getenv("SUPABASE_USER_TABLE_NAME", "users_database")
+    try:
+        supabase.table(table_name).update({
+            "password": hashed_pw,
+            "password_updated": True
+        }).eq("email", email).execute()
+        print(f"[Auth] Password updated in DB for {email}")
+        return jsonify({"success": True, "message": "Password updated successfully"})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
 @app.route('/api/profile/avatar', methods=['POST'])
 def update_avatar():
     data = request.json

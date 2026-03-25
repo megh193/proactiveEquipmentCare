@@ -87,12 +87,40 @@
                 <button class="action-btn home-btn" onclick="window.history.back()">
                     <i class="fa-solid fa-house"></i> Go Back
                 </button>
+                <button class="action-btn" style="background:#2563eb;color:#fff;" onclick="showChangePasswordModal()">
+                    <i class="fa-solid fa-key"></i> Change Password
+                </button>
                 <button class="action-btn logout-btn" onclick="showLogoutPopup()">
                     <i class="fa-solid fa-right-from-bracket"></i> Logout
                 </button>
             </div>
         </div>
     </main>
+
+    <!-- Change Password Modal -->
+    <div class="logout-overlay" id="change-password-overlay">
+        <div class="logout-popup">
+            <div class="popup-icon"><i class="fa-solid fa-key"></i></div>
+            <h3>Change Password</h3>
+            <div id="cp-step-1">
+                <p>We'll send a verification code to your email.</p>
+                <div class="popup-actions">
+                    <button class="popup-btn btn-no" onclick="hideChangePasswordModal()">Cancel</button>
+                    <button class="popup-btn btn-yes" onclick="requestPasswordOtp()">Send OTP</button>
+                </div>
+            </div>
+            <div id="cp-step-2" style="display:none;">
+                <input type="text" id="cp-otp" placeholder="Enter OTP" maxlength="6" style="width:100%;padding:8px;margin:8px 0;border-radius:6px;border:1px solid #ccc;font-size:1rem;">
+                <input type="password" id="cp-new-password" placeholder="New Password" style="width:100%;padding:8px;margin:8px 0;border-radius:6px;border:1px solid #ccc;font-size:1rem;">
+                <input type="password" id="cp-confirm-password" placeholder="Confirm New Password" style="width:100%;padding:8px;margin:8px 0;border-radius:6px;border:1px solid #ccc;font-size:1rem;">
+                <p id="cp-error" style="color:red;font-size:0.85rem;min-height:18px;"></p>
+                <div class="popup-actions">
+                    <button class="popup-btn btn-no" onclick="hideChangePasswordModal()">Cancel</button>
+                    <button class="popup-btn btn-yes" onclick="submitPasswordChange()">Update Password</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Custom Logout Confirmation Popup -->
     <div class="logout-overlay" id="logout-overlay">
