@@ -101,6 +101,69 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Logout Popup Functions (Global scope to be called inline from HTML)
 
+function showChangePasswordModal() {
+    document.getElementById('cp-step-1').style.display = 'block';
+    document.getElementById('cp-step-2').style.display = 'none';
+    document.getElementById('change-password-overlay').classList.add('show');
+}
+
+function hideChangePasswordModal() {
+    document.getElementById('change-password-overlay').classList.remove('show');
+}
+
+function requestPasswordOtp() {
+    const email = localStorage.getItem('user_email');
+    if (!email) return alert('No user session found.');
+    fetch('http://127.0.0.1:5000/api/change-password/request-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.success) {
+            document.getElementById('cp-step-1').style.display = 'none';
+            document.getElementById('cp-step-2').style.display = 'block';
+        } else {
+            alert(d.message || 'Failed to send OTP.');
+        }
+    })
+    .catch(() => alert('Server error. Please try again.'));
+}
+
+function submitPasswordChange() {
+    const email = localStorage.getItem('user_email');
+    const otp = document.getElementById('cp-otp').value.trim();
+    const newPw = document.getElementById('cp-new-password').value;
+    const confirmPw = document.getElementById('cp-confirm-password').value;
+    const errEl = document.getElementById('cp-error');
+    errEl.textContent = '';
+
+    if (!otp || !newPw || !confirmPw) { errEl.textContent = 'All fields are required.'; return; }
+    if (newPw !== confirmPw) { errEl.textContent = 'Passwords do not match.'; return; }
+    if (newPw.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; return; }
+
+    fetch('http://127.0.0.1:5000/api/change-password/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp, new_password: newPw })
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.success) {
+            hideChangePasswordModal();
+            alert('Password updated successfully!');
+        } else {
+            errEl.textContent = d.message || 'Failed to update password.';
+        }
+    })
+    .catch(() => { errEl.textContent = 'Server error. Please try again.'; });
+}
+
+document.getElementById('change-password-overlay').addEventListener('click', function(e) {
+    if (e.target === this) hideChangePasswordModal();
+});
+
 function showLogoutPopup() {
     const overlay = document.getElementById('logout-overlay');
     overlay.classList.add('show');

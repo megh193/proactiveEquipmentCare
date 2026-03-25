@@ -1,12 +1,16 @@
 import os
 import sys
+import io
 import asyncio
+import numpy as np
+import pandas as pd
 
 if sys.platform == 'win32':
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
+import bcrypt
 from auth_service import authenticate_user, log_login, generate_otp, send_otp_email, store_otp, verify_otp
 from dotenv import load_dotenv
 
@@ -14,6 +18,27 @@ load_dotenv(override=True)
 
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 CORS(app)
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Lazy-load LSTM model once
+_model = None
+def get_model():
+    global _model
+    if _model is None:
+        from tensorflow import keras
+        model_path = os.getenv('MODEL_PATH', os.path.join(BASE_DIR, 'models', 'motor_lstm_model.h5'))
+        _model = keras.models.load_model(model_path)
+    return _model
+
+FEATURE_COLS = [
+    'Air temperature [K]',
+    'Process temperature [K]',
+    'Rotational speed [rpm]',
+    'Torque [Nm]',
+    'Tool wear [min]'
+]
+SEQUENCE_LENGTH = int(os.getenv('SEQUENCE_LENGTH', 30))
 
 @app.route('/')
 def index():
@@ -42,17 +67,9 @@ def login():
     user = authenticate_user(email, password)
     
     if user:
-        # Step 1 Success: Generate and Send OTP
         otp = generate_otp()
-        # Enhanced store_otp to hold user role
-        from auth_service import otp_storage
-        import time
-        otp_storage[email] = {
-            "otp": otp,
-            "timestamp": time.time(),
-            "role": user["role"]
-        }
-        
+        print(f"[Login] Auth success for {email}, role={user['role']}, otp={otp}")
+        store_otp(email, otp, user["role"])
         email_sent = send_otp_email(email, otp)
         
         if email_sent:
@@ -70,10 +87,11 @@ def verify_otp_route():
     otp = data.get('otp')
     ip_address = request.remote_addr
     
-    # Grab role before verification clears the storage
-    from auth_service import otp_storage
-    role = otp_storage.get(email, {}).get("role", "admin")
-    
+    # Fetch role before OTP is deleted on verification
+    from supabase_client import supabase as _sb
+    _otp_row = _sb.table("otp_store").select("role").eq("email", email).execute()
+    role = _otp_row.data[0]["role"] if _otp_row.data else "admin"
+
     is_valid, message = verify_otp(email, otp)
     
     if is_valid:
@@ -148,10 +166,11 @@ def add_user():
     try:
         # Step 2: Insert into users_database (no status column)
         table_name = os.getenv("SUPABASE_USER_TABLE_NAME", "users_database")
+        hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
         response = supabase.table(table_name).insert({
             "name": name,
             "email": email,
-            "password": password,
+            "password": hashed_pw,
             "Role": role
         }).execute()
         
@@ -178,7 +197,7 @@ def update_user(user_id):
     if 'email' in data:
         update_data['email'] = data['email']
     if 'password' in data and data['password']:
-        update_data['password'] = data['password']
+        update_data['password'] = bcrypt.hashpw(data['password'].encode(), bcrypt.gensalt()).decode()
     if 'role' in data:
         update_data['Role'] = data['role']
     if 'status' in data:
@@ -291,6 +310,54 @@ def get_profile():
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
+@app.route('/api/change-password/request-otp', methods=['POST'])
+def change_password_request_otp():
+    data = request.json
+    email = data.get('email')
+    if not email:
+        return jsonify({"success": False, "message": "Email is required"}), 400
+
+    # Verify user exists
+    table_name = os.getenv("SUPABASE_USER_TABLE_NAME", "users_database")
+    res = supabase.table(table_name).select("email").eq("email", email).execute()
+    if not res.data:
+        return jsonify({"success": False, "message": "User not found"}), 404
+
+    otp = generate_otp()
+    store_otp(email, otp, "change_password")
+    email_sent = send_otp_email(email, otp)
+    if email_sent:
+        return jsonify({"success": True, "message": "OTP sent to your email"})
+    return jsonify({"success": False, "message": "Failed to send OTP"}), 500
+
+
+@app.route('/api/change-password/verify', methods=['POST'])
+def change_password_verify():
+    data = request.json
+    email = data.get('email')
+    otp = data.get('otp')
+    new_password = data.get('new_password')
+
+    if not email or not otp or not new_password:
+        return jsonify({"success": False, "message": "Email, OTP, and new password are required"}), 400
+
+    is_valid, message = verify_otp(email, otp)
+    if not is_valid:
+        return jsonify({"success": False, "message": message}), 401
+
+    hashed_pw = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt()).decode()
+    table_name = os.getenv("SUPABASE_USER_TABLE_NAME", "users_database")
+    try:
+        supabase.table(table_name).update({
+            "password": hashed_pw,
+            "password_updated": True
+        }).eq("email", email).execute()
+        print(f"[Auth] Password updated in DB for {email}")
+        return jsonify({"success": True, "message": "Password updated successfully"})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
 @app.route('/api/profile/avatar', methods=['POST'])
 def update_avatar():
     data = request.json
@@ -310,6 +377,79 @@ def update_avatar():
         return jsonify({"success": True, "message": "Avatar updated successfully"})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    if 'file' not in request.files:
+        return jsonify({"success": False, "message": "No file uploaded"}), 400
+
+    file = request.files['file']
+    if not file.filename.lower().endswith('.csv'):
+        return jsonify({"success": False, "message": "Only CSV files are supported"}), 400
+
+    try:
+        data = pd.read_csv(file)
+
+        missing = [c for c in FEATURE_COLS if c not in data.columns]
+        if missing:
+            return jsonify({"success": False, "message": f"Missing columns: {missing}"}), 400
+
+        if len(data) < SEQUENCE_LENGTH:
+            return jsonify({"success": False, "message": f"Need at least {SEQUENCE_LENGTH} rows of data"}), 400
+
+        X = data[FEATURE_COLS].values
+        sequences, indices = [], []
+        for i in range(len(X) - SEQUENCE_LENGTH + 1):
+            sequences.append(X[i:i + SEQUENCE_LENGTH])
+            indices.append(i + SEQUENCE_LENGTH - 1)
+
+        X_seq = np.array(sequences)
+        model = get_model()
+        preds = model.predict(X_seq, verbose=0).flatten()
+
+        result_df = pd.DataFrame({
+            'timestamp': data['Timestamp'].iloc[indices].values if 'Timestamp' in data.columns else indices,
+            'motor_id': data['Product ID'].iloc[indices].values if 'Product ID' in data.columns else [f'Motor_{i}' for i in indices],
+            'failure_probability': preds,
+        })
+
+        # Sort by timestamp then motor_id to match reference output
+        result_df = result_df.sort_values(['timestamp', 'motor_id']).reset_index(drop=True)
+
+        download = request.args.get('download', 'false').lower() == 'true'
+        if download:
+            buf = io.StringIO()
+            result_df.to_csv(buf, index=False)
+            buf.seek(0)
+            return send_file(
+                io.BytesIO(buf.getvalue().encode()),
+                mimetype='text/csv',
+                as_attachment=True,
+                download_name='predictions.csv'
+            )
+
+        # For JSON (analyse page charts) also include sensor cols
+        json_df = pd.DataFrame({
+            'timestamp': data['Timestamp'].iloc[indices].values if 'Timestamp' in data.columns else indices,
+            'motor_id': data['Product ID'].iloc[indices].values if 'Product ID' in data.columns else [f'Motor_{i}' for i in indices],
+            'failure_probability': (preds * 100).round(4),
+            'air_temp': data['Air temperature [K]'].iloc[indices].values,
+            'process_temp': data['Process temperature [K]'].iloc[indices].values,
+            'rotational_speed': data['Rotational speed [rpm]'].iloc[indices].values,
+            'torque': data['Torque [Nm]'].iloc[indices].values,
+            'tool_wear': data['Tool wear [min]'].iloc[indices].values,
+        })
+
+        return jsonify({
+            "success": True,
+            "total_rows": len(json_df),
+            "predictions": json_df.to_dict(orient='records')
+        })
+
+    except Exception as e:
+        print(f"Prediction error: {type(e).__name__}: {e}")
+        return jsonify({"success": False, "message": f"Prediction failed: {str(e)}"}), 500
+
 
 if __name__ == '__main__':
     debug_mode = os.getenv('FLASK_DEBUG', 'True') == 'True'

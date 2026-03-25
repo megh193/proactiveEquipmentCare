@@ -2,13 +2,11 @@ import os
 import requests
 from dotenv import load_dotenv
 
-# Load .env file
 load_dotenv()
 
-# Get URL from .env
-url = os.getenv("DOWNLOAD_RAW_DATA_URL")
+DOWNLOAD_RAW_DATA_URL = os.getenv("DOWNLOAD_RAW_DATA_URL")
 
-if not url:
+if not DOWNLOAD_RAW_DATA_URL:
     raise ValueError("DOWNLOAD_RAW_DATA_URL not found in .env file")
 
 # Get project root directory
@@ -24,7 +22,7 @@ os.makedirs(RAW_DATA_DIR, exist_ok=True)
 file_path = os.path.join(RAW_DATA_DIR, "merged_sensorData.csv")
 
 # Download file
-response = requests.get(url)
+response = requests.get(DOWNLOAD_RAW_DATA_URL)
 
 if response.status_code == 200:
     with open(file_path, "wb") as f:

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analyse - Proactive Equipment Care</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="analyse.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo">Proactive Equipment Care</div>
+        <div class="nav-links">
+            <button class="nav-btn" onclick="goBackToDashboard()">
+                <i class="fa-solid fa-gauge-high"></i> Dashboard
+            </button>
+            <button class="nav-btn active-nav">
+                <i class="fa-solid fa-chart-line"></i> Analyse
+            </button>
+            <div class="profile-dropdown">
+                <button class="nav-btn profile-icon-btn">
+                    <img src="default_avatar.svg" alt="Profile" class="profile-avatar" id="nav-profile-img">
+                </button>
+                <div class="dropdown-menu">
+                    <button class="dropdown-item" onclick="window.location.href='profile.html'">
+                        <i class="fa-solid fa-user"></i> Profile
+                    </button>
+                    <button class="dropdown-item logout-item" onclick="showLogoutPopup()">
+                        <i class="fa-solid fa-right-from-bracket"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Loading State -->
+    <div id="loading-state" class="loading-state">
+        <div class="spinner"></div>
+        <p>Running model predictions...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="error-state" class="error-state hidden">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <h3 id="error-title">Something went wrong</h3>
+        <p id="error-msg">Could not generate predictions.</p>
+        <button class="action-btn btn-secondary" onclick="goBackToDashboard()">
+            <i class="fa-solid fa-arrow-left"></i> Go Back
+        </button>
+    </div>
+
+    <!-- Main Analyse Content -->
+    <main id="analyse-content" class="analyse-content hidden">
+
+        <div class="analyse-header">
+            <div>
+                <h1>Analysis Results</h1>
+                <p id="analyse-meta">Loading...</p>
+            </div>
+            <div class="header-stats" id="header-stats"></div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="charts-grid">
+
+            <div class="chart-card wide">
+                <div class="chart-title">
+                    <i class="fa-solid fa-wave-square"></i>
+                    Failure Probability Over Time
+                </div>
+                <div class="chart-wrap">
+                    <canvas id="chart-failure-time"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-title">
+                    <i class="fa-solid fa-industry"></i>
+                    Top 10 Motors by Risk
+                </div>
+                <div class="chart-wrap">
+                    <canvas id="chart-motor-risk"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-title">
+                    <i class="fa-solid fa-circle-half-stroke"></i>
+                    Risk Distribution
+                </div>
+                <div class="chart-wrap chart-wrap-sm">
+                    <canvas id="chart-risk-dist"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-title">
+                    <i class="fa-solid fa-temperature-half"></i>
+                    Air Temp vs Failure Probability
+                </div>
+                <div class="chart-wrap">
+                    <canvas id="chart-temp-failure"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-title">
+                    <i class="fa-solid fa-gear"></i>
+                    Torque vs Rotational Speed
+                </div>
+                <div class="chart-wrap">
+                    <canvas id="chart-torque-speed"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card wide">
+                <div class="chart-title">
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+                    Tool Wear Distribution
+                </div>
+                <div class="chart-wrap">
+                    <canvas id="chart-tool-wear"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Bottom Action Bar -->
+        <div class="bottom-bar">
+            <button class="action-btn btn-secondary" onclick="goBackToDashboard()">
+                <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+            </button>
+            <button class="action-btn btn-gold" id="convert-btn" onclick="convertAndDownload()">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Convert & Download
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Logout Popup -->
+    <div class="logout-overlay" id="logout-overlay">
+        <div class="logout-popup">
+            <div class="popup-icon"><i class="fa-solid fa-circle-exclamation"></i></div>
+            <h3>Logout Confirmation</h3>
+            <p>Are you sure you want to log out of your session?</p>
+            <div class="popup-actions">
+                <button class="popup-btn btn-no" onclick="hideLogoutPopup()">No, Cancel</button>
+                <button class="popup-btn btn-yes" onclick="performLogout()">Yes, Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast hidden">
+        <i class="fa-solid fa-circle-info"></i>
+        <span id="toast-msg"></span>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        function goBackToDashboard() {
+            var role = localStorage.getItem('role');
+            window.location.href = (role === 'super_admin') ? 'super_admin_dashboard.html' : 'admin_dashboard.html';
+        }
+    </script>
+    <script src="analyse.js"></script>
+</body>
+</html>

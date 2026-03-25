@@ -1,23 +1,18 @@
 import os
-import uuid
 import socket
 import smtplib
 import ssl
 import random
 import string
-import time
 import re
-from datetime import datetime, timezone
+import bcrypt
+from datetime import datetime, timezone, timedelta
 from supabase_client import supabase
 from dotenv import load_dotenv
 
 load_dotenv(override=True)
 
-# Temporary OTP storage (In production, use Redis or a database)
-otp_storage = {}
-
 def generate_otp(length=6):
-    """Generate a numeric OTP of given length."""
     return ''.join(random.choices(string.digits, k=length))
 
 def send_otp_email(receiver_email, otp):
@@ -47,32 +42,41 @@ This code will expire in 2 minutes.
         print(f"Failed to send email: {e}")
         return False
 
-def store_otp(email, otp):
-    """Store OTP with a timestamp."""
-    otp_storage[email] = {
-        "otp": otp,
-        "timestamp": time.time()
-    }
+def store_otp(email, otp, role):
+    """Upsert OTP into Supabase otp_store table with 2-minute expiry."""
+    try:
+        expires_at = (datetime.now(timezone.utc) + timedelta(minutes=2)).isoformat()
+        res = supabase.table("otp_store").upsert({
+            "email": email,
+            "otp": otp,
+            "role": role,
+            "expires_at": expires_at
+        }).execute()
+        print(f"[OTP] Stored OTP for {email}: {res.data}")
+    except Exception as e:
+        print(f"[OTP] Failed to store OTP for {email}: {e}")
 
 def verify_otp(email, entered_otp):
-    """Verify the entered OTP."""
-    if email not in otp_storage:
-        return False, "OTP not generated or expired."
-    
-    data = otp_storage[email]
-    timestamp = data["timestamp"]
-    stored_otp = data["otp"]
-    
-    # Check expiration (2 minutes = 120 seconds)
-    if time.time() - timestamp > 120:
-        del otp_storage[email]
-        return False, "OTP expired."
-        
-    if entered_otp == stored_otp:
-        del otp_storage[email]  # Clear OTP after successful verification
-        return True, "OTP Verified"
-    
-    return False, "Incorrect OTP."
+    """Verify OTP from Supabase otp_store."""
+    try:
+        res = supabase.table("otp_store").select("*").eq("email", email).execute()
+        if not res.data:
+            return False, "OTP not generated or expired."
+
+        row = res.data[0]
+        expires_at = datetime.fromisoformat(row["expires_at"])
+        if datetime.now(timezone.utc) > expires_at:
+            supabase.table("otp_store").delete().eq("email", email).execute()
+            return False, "OTP expired."
+
+        if entered_otp == row["otp"]:
+            supabase.table("otp_store").delete().eq("email", email).execute()
+            return True, "OTP Verified"
+
+        return False, "Incorrect OTP."
+    except Exception as e:
+        print(f"OTP verification error: {e}")
+        return False, "OTP verification failed."
 
 
 def authenticate_user(email, password):
@@ -90,16 +94,24 @@ def authenticate_user(email, password):
     user_table = os.getenv("SUPABASE_USER_TABLE_NAME", "users_database")
 
     # ── Tier 1: Supabase Auth ──────────────────────────────
+    # Skip Tier 1 if user has updated their password via the app (DB is source of truth)
     supabase_auth_ok = False
     try:
-        auth_response = supabase.auth.sign_in_with_password({
-            "email": email,
-            "password": password
-        })
-        if auth_response and auth_response.user:
-            supabase_auth_ok = True
-    except Exception as e:
-        print(f"Supabase Auth sign-in failed (will try DB fallback): {e}")
+        pw_check = supabase.table(user_table).select("password_updated").eq("email", email).execute()
+        password_updated = pw_check.data[0].get("password_updated", False) if pw_check.data else False
+    except Exception:
+        password_updated = False
+
+    if not password_updated:
+        try:
+            auth_response = supabase.auth.sign_in_with_password({
+                "email": email,
+                "password": password
+            })
+            if auth_response and auth_response.user:
+                supabase_auth_ok = True
+        except Exception as e:
+            print(f"Supabase Auth sign-in failed (will try DB fallback): {e}")
 
     if supabase_auth_ok:
         # Fetch role from users_database
@@ -116,20 +128,27 @@ def authenticate_user(email, password):
             print(f"Error fetching role after Supabase Auth success: {e}")
         return None
 
-    # ── Tier 2: Fallback — DB plaintext password check ────
-    # Handles existing users who pre-date Supabase Auth migration.
+    # ── Tier 2: Fallback — DB bcrypt password check ────
     try:
         response = supabase.table(user_table).select("email, Role, password").eq("email", email).execute()
         users = response.data
 
         if users and len(users) > 0:
             user = users[0]
-            if user.get("password") == password:
+            stored_pw = user.get("password", "")
+            password_match = False
+            try:
+                password_match = bcrypt.checkpw(password.encode(), stored_pw.encode())
+            except Exception:
+                # Legacy plaintext fallback (one-time migration path)
+                password_match = (stored_pw == password)
+
+            if password_match:
                 role_val = user.get("Role") or user.get("role") or "admin"
                 normalized_role = role_val.lower().strip().replace(" ", "_")
                 if normalized_role == "superadmin":
                     normalized_role = "super_admin"
-                print(f"[Auth] User {email} authenticated via DB fallback (not yet in Supabase Auth).")
+                print(f"[Auth] User {email} authenticated via DB fallback.")
                 return {"email": email, "role": normalized_role}
     except Exception as e:
         print(f"DB fallback auth error: {e}")
