@@ -1,0 +1,29 @@
+# Environment variables — never commit secrets
+.env
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Trained model (large binary — regenerate via notebooks)
+models/*.h5
+
+# Raw & processed data (large files — downloaded/generated via scripts)
+data/raw/
+data/processed/
+
+# Prediction output (generated at runtime)
+dashboard/*.csv
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# OS noise
+.DS_Store
+Thumbs.db
