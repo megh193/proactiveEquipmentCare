@@ -7,8 +7,8 @@
 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- FontAwesome for Premium Icons -->
+
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- External CSS -->
@@ -17,18 +17,30 @@
 <body>
     <!-- Top Navbar Consistent with Dashboard -->
     <nav class="navbar">
-        <div class="logo">Proactive Active Care Equipment</div>
+        <div class="logo">Proactive Equipment Care</div>
         <div class="nav-links">
-            <button class="nav-btn analyse-btn" onclick="window.location.href='super_admin_dashboard.html'"><i class="fa-solid fa-house"></i> Home</button>
-            <button class="nav-btn manage-users-nav-btn" onclick="window.location.href='manage_users.html'"><i class="fa-solid fa-users-gear"></i> Manage Users</button>
-            <button class="nav-btn analyse-btn" onclick="alert('Analyze functionality pending')"><i class="fa-solid fa-chart-line"></i> Analyse</button>
+            <button class="nav-btn" onclick="window.location.href='super_admin_dashboard.html'">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                Dashboard
+            </button>
+            <button class="nav-btn manage-users-btn" onclick="window.location.href='manage_users.html'">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;color:#fff"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Manage Users
+            </button>
             <div class="profile-dropdown">
                 <button class="nav-btn profile-icon-btn">
-                    <img src="default_avatar.svg" alt="Profile" class="profile-avatar" id="nav-profile-img">
+                    <img src="default_avatar.svg" alt="Profile" class="profile-avatar" id="nav-profile-img"
+                         onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'32\' height=\'32\' viewBox=\'0 0 24 24\' fill=\'%23cfd8dc\' stroke=\'%23607d8b\' stroke-width=\'1.5\'%3E%3Cpath d=\'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\'/%3E%3Ccircle cx=\'12\' cy=\'7\' r=\'4\'/%3E%3C/svg%3E'">
                 </button>
                 <div class="dropdown-menu">
-                    <button class="dropdown-item" onclick="window.location.href='super_admin_profile.html'"><i class="fa-solid fa-user"></i> Profile</button>
-                    <button class="dropdown-item logout-item" onclick="showLogoutPopup()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+                    <button class="dropdown-item" onclick="window.location.href='super_admin_profile.html'">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#D4AF37"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        Profile
+                    </button>
+                    <button class="dropdown-item logout-item" onclick="showLogoutPopup()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#EF4444"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                        Logout
+                    </button>
                 </div>
             </div>
         </div>
@@ -45,9 +57,10 @@
             <div class="profile-body">
                 <div class="profile-image-section">
                     <div class="image-wrapper">
-                        <img src="default_avatar.svg" alt="User Profile" class="main-profile-img" id="main-profile-img">
+                        <img src="default_avatar.svg" alt="User Profile" class="main-profile-img" id="main-profile-img"
+                             onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'96\' height=\'96\' viewBox=\'0 0 24 24\' fill=\'%23cfd8dc\' stroke=\'%23607d8b\' stroke-width=\'1.5\'%3E%3Cpath d=\'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\'/%3E%3Ccircle cx=\'12\' cy=\'7\' r=\'4\'/%3E%3C/svg%3E'">
                         <label for="profile-upload" class="upload-overlay">
-                            <i class="fa-solid fa-camera"></i>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
                             <span>Change</span>
                         </label>
                         <input type="file" id="profile-upload" accept="image/*" class="hidden-input">
@@ -56,7 +69,7 @@
 
                 <div class="profile-details">
                     <div class="detail-item">
-                        <div class="detail-icon"><i class="fa-solid fa-user-shield"></i></div>
+                        <div class="detail-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#C9A84C"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
                         <div class="detail-text">
                             <span class="detail-label">Role</span>
                             <span class="detail-value">Super Admin</span>
@@ -64,7 +77,7 @@
                     </div>
 
                     <div class="detail-item">
-                        <div class="detail-icon"><i class="fa-solid fa-network-wired"></i></div>
+                        <div class="detail-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#C9A84C"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg></div>
                         <div class="detail-text">
                             <span class="detail-label">IP Address</span>
                             <span class="detail-value" id="user-ip">Loading...</span>
@@ -72,7 +85,7 @@
                     </div>
 
                     <div class="detail-item">
-                        <div class="detail-icon"><i class="fa-regular fa-clock"></i></div>
+                        <div class="detail-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#C9A84C"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
                         <div class="detail-text">
                             <span class="detail-label">Last Login</span>
                             <span class="detail-value" id="last-login">Just now</span>
@@ -83,13 +96,13 @@
 
             <div class="profile-actions">
                 <button class="action-btn home-btn" onclick="window.history.back()">
-                    <i class="fa-solid fa-house"></i> Go Back
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg> Go Back
                 </button>
-                <button class="action-btn" style="background:#2563eb;color:#fff;" onclick="showChangePasswordModal()">
-                    <i class="fa-solid fa-key"></i> Change Password
+                <button class="action-btn change-pw-btn" onclick="showChangePasswordModal()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg> Change Password
                 </button>
                 <button class="action-btn logout-btn" onclick="showLogoutPopup()">
-                    <i class="fa-solid fa-right-from-bracket"></i> Logout
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Logout
                 </button>
             </div>
         </div>
@@ -98,7 +111,7 @@
     <!-- Change Password Modal -->
     <div class="logout-overlay" id="change-password-overlay">
         <div class="logout-popup">
-            <div class="popup-icon"><i class="fa-solid fa-key"></i></div>
+            <div class="popup-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></div>
             <h3>Change Password</h3>
             <div id="cp-step-1">
                 <p>We'll send a verification code to your email.</p>
@@ -124,7 +137,7 @@
     <div class="logout-overlay" id="logout-overlay">
         <div class="logout-popup">
             <div class="popup-icon">
-                <i class="fa-solid fa-circle-exclamation"></i>
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             </div>
             <h3>Logout Confirmation</h3>
             <p>Are you sure you want to log out of your session?</p>

@@ -137,7 +137,7 @@ function convertAndDownload() {
 
     var btn = document.getElementById('convert-btn');
     btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+    btn.innerHTML = '⏳ Processing...';
 
     var formData = new FormData();
     formData.append('file', uploadedFile);
@@ -170,7 +170,7 @@ function convertAndDownload() {
     })
     .finally(function () {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Download Predictions';
+        btn.innerHTML = '✦ Download Predictions';
     });
 }
 

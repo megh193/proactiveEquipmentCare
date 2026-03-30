@@ -91,7 +91,7 @@ body::after {
     transition: all 0.3s ease;
     display: flex; align-items: center; gap: 0.5rem;
 }
-.nav-btn i { color: var(--primary-gold); font-size: 1rem; }
+.nav-btn i, .nav-btn svg { color: var(--primary-gold); font-size: 1rem; }
 .nav-btn:hover {
     background: #fff;
     border-color: var(--primary-gold);
@@ -103,7 +103,7 @@ body::after {
     border-color: rgba(212,175,55,0.5);
     color: var(--accent-gold);
 }
-.active-nav i { color: var(--accent-gold); }
+.active-nav i, .active-nav svg { color: var(--accent-gold); }
 
 .profile-dropdown { position: relative; display: inline-block; }
 .profile-icon-btn { padding: 0.3rem 0.5rem; border-radius: 50px; }
@@ -140,9 +140,9 @@ body::after {
     border-bottom: 1px solid rgba(0,0,0,0.04);
 }
 .dropdown-item:last-child { border-bottom: none; }
-.dropdown-item i { color: var(--primary-gold); }
+.dropdown-item i, .dropdown-item svg { color: var(--primary-gold); }
 .dropdown-item:hover { background: rgba(212,175,55,0.08); color: var(--primary-gold); }
-.dropdown-item.logout-item i { color: var(--danger); }
+.dropdown-item.logout-item i, .dropdown-item.logout-item svg { color: var(--danger); }
 .dropdown-item.logout-item:hover { background: rgba(239,68,68,0.08); color: var(--danger); }
 
 /* ── Loading State ── */
@@ -178,7 +178,7 @@ body::after {
     padding: 4rem;
     text-align: center;
 }
-.error-state i {
+.error-state i, .error-state svg {
     font-size: 3.5rem;
     color: var(--danger);
     margin-bottom: 0.5rem;
@@ -276,7 +276,7 @@ body::after {
     align-items: center;
     gap: 0.5rem;
 }
-.chart-title i { color: var(--primary-gold); }
+.chart-title i, .chart-title svg { color: var(--primary-gold); }
 .chart-wrap { position: relative; height: 280px; }
 .chart-wrap-sm { height: 260px; }
 
@@ -381,7 +381,7 @@ body::after {
     transition: all 0.4s ease;
 }
 .toast.hidden { opacity: 0; visibility: hidden; transform: translateY(20px); }
-.toast i { color: var(--primary-gold); }
+.toast i, .toast svg { color: var(--primary-gold); }
 
 .hidden { display: none !important; }
 

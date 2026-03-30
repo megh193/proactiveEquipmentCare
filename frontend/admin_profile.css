@@ -441,6 +441,59 @@ body::before {
     transform: translateY(-2px);
 }
 
+/* Change Password Button */
+.change-pw-btn {
+    background: linear-gradient(135deg, #c9a227 0%, #a8831b 100%);
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 14px rgba(201,162,39,0.35);
+}
+.change-pw-btn:hover {
+    background: linear-gradient(135deg, #b38f20 0%, #8c6e12 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(201,162,39,0.45);
+}
+.change-pw-btn i { color: #fff; }
+
+/* Change Password Modal - Key Icon gold instead of red */
+#change-password-overlay .popup-icon {
+    background: var(--light-gold);
+    color: var(--primary-gold);
+}
+
+/* Change Password Modal - Styled Inputs */
+#cp-step-2 input[type="text"],
+#cp-step-2 input[type="password"] {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    margin: 0.4rem 0;
+    border-radius: 10px;
+    border: 1.5px solid rgba(201,162,39,0.3);
+    font-size: 0.95rem;
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-main);
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+#cp-step-2 input[type="text"]:focus,
+#cp-step-2 input[type="password"]:focus {
+    border-color: var(--primary-gold);
+    box-shadow: 0 0 0 3px rgba(201,162,39,0.12);
+    background: #ffffff;
+}
+#cp-step-2 input::placeholder { color: #aaa; }
+
+/* Override btn-yes in change-password context to use gold */
+#change-password-overlay .btn-yes {
+    background: linear-gradient(135deg, #c9a227 0%, #a8831b 100%);
+    box-shadow: 0 4px 10px rgba(201,162,39,0.25);
+}
+#change-password-overlay .btn-yes:hover {
+    background: linear-gradient(135deg, #b38f20 0%, #8c6e12 100%);
+    box-shadow: 0 6px 15px rgba(201,162,39,0.35);
+}
+
 
 /* Logout Popup Overlay */
 .logout-overlay {
@@ -561,3 +614,17 @@ body::before {
         flex-direction: column;
     }
 }
+
+/* Gold filled Manage Users button */
+.manage-users-btn {
+    background: linear-gradient(135deg, #D4AF37 0%, #AA8B24 100%);
+    border: none; color: #fff;
+    box-shadow: 0 4px 14px rgba(212,175,55,0.35);
+}
+.manage-users-btn:hover {
+    background: linear-gradient(135deg, #C5A031 0%, #8C701B 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(212,175,55,0.45);
+    border: none; color: #fff;
+}
+.manage-users-btn svg { color: #fff !important; }

@@ -454,6 +454,59 @@ body::before {
     transform: translateY(-2px);
 }
 
+/* Change Password Button */
+.change-pw-btn {
+    background: linear-gradient(135deg, var(--primary-gold) 0%, var(--hover-gold) 100%);
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 14px rgba(184,146,46,0.35);
+}
+.change-pw-btn:hover {
+    background: linear-gradient(135deg, var(--hover-gold) 0%, #7a5e10 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(184,146,46,0.45);
+}
+.change-pw-btn i { color: #fff; }
+
+/* Change Password Modal - Key Icon gold instead of red */
+#change-password-overlay .popup-icon {
+    background: rgba(184,146,46,0.1);
+    color: var(--primary-gold);
+}
+
+/* Change Password Modal - Styled Inputs */
+#cp-step-2 input[type="text"],
+#cp-step-2 input[type="password"] {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    margin: 0.4rem 0;
+    border-radius: 10px;
+    border: 1.5px solid var(--border-gold);
+    font-size: 0.95rem;
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-main);
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+#cp-step-2 input[type="text"]:focus,
+#cp-step-2 input[type="password"]:focus {
+    border-color: var(--primary-gold);
+    box-shadow: 0 0 0 3px rgba(184,146,46,0.12);
+    background: #ffffff;
+}
+#cp-step-2 input::placeholder { color: #bbb; }
+
+/* Override btn-yes in change-password context to use gold */
+#change-password-overlay .btn-yes {
+    background: linear-gradient(135deg, var(--primary-gold) 0%, var(--hover-gold) 100%);
+    box-shadow: 0 4px 10px rgba(184,146,46,0.25);
+}
+#change-password-overlay .btn-yes:hover {
+    background: linear-gradient(135deg, var(--hover-gold) 0%, #7a5e10 100%);
+    box-shadow: 0 6px 15px rgba(184,146,46,0.35);
+}
+
 
 /* Logout Popup Overlay */
 .logout-overlay {

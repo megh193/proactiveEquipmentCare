@@ -5,8 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Proactive Equipment Care</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="default_dashboard.css">
+    <link rel="stylesheet" href="admin_dashboard.css">
+    <style>
+        .upload-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .upload-icon-svg {
+            width: 56px;
+            height: 56px;
+            color: #C9A84C;
+            margin-bottom: 12px;
+        }
+    </style>
 </head>
 <body>
 
@@ -14,21 +28,26 @@
         <div class="logo">Proactive Equipment Care</div>
         <div class="nav-links">
             <button class="nav-btn active-nav" onclick="window.location.href='admin_dashboard.html'">
-                <i class="fa-solid fa-gauge-high"></i> Dashboard
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                Dashboard
             </button>
             <button class="nav-btn" onclick="goToAnalyse()">
-                <i class="fa-solid fa-chart-line"></i> Analyse
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                Analyse
             </button>
             <div class="profile-dropdown">
                 <button class="nav-btn profile-icon-btn">
-                    <img src="default_avatar.svg" alt="Profile" class="profile-avatar" id="nav-profile-img">
+                    <img src="default_avatar.svg" alt="Profile" class="profile-avatar" id="nav-profile-img"
+                         onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'32\' height=\'32\' viewBox=\'0 0 24 24\' fill=\'%23cfd8dc\' stroke=\'%23607d8b\' stroke-width=\'1.5\'%3E%3Cpath d=\'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\'/%3E%3Ccircle cx=\'12\' cy=\'7\' r=\'4\'/%3E%3C/svg%3E'">
                 </button>
                 <div class="dropdown-menu">
-                    <button class="dropdown-item" onclick="window.location.href='profile.html'">
-                        <i class="fa-solid fa-user"></i> Profile
+                    <button class="dropdown-item" onclick="window.location.href='admin_profile.html'">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#D4AF37"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        Profile
                     </button>
                     <button class="dropdown-item logout-item" onclick="showLogoutPopup()">
-                        <i class="fa-solid fa-right-from-bracket"></i> Logout
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#EF4444"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                        Logout
                     </button>
                 </div>
             </div>
@@ -40,16 +59,20 @@
         <!-- STEP 1: Upload Section -->
         <div id="upload-section" class="section-card">
             <div class="section-header">
-                <i class="fa-solid fa-cloud-arrow-up section-icon"></i>
                 <h2>Upload Sensor Data</h2>
                 <p>Upload your motor sensor CSV file to begin analysis</p>
             </div>
             <div class="upload-box" id="upload-box">
-                <i class="fa-solid fa-cloud-arrow-up upload-icon" id="upload-icon"></i>
+                <svg id="upload-icon" class="upload-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="16 16 12 12 8 16"></polyline>
+                    <line x1="12" y1="12" x2="12" y2="21"></line>
+                    <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path>
+                </svg>
                 <p id="upload-subtitle">Drag &amp; drop your CSV file here, or click to browse</p>
                 <input type="file" id="csv-upload" accept=".csv" class="file-input">
                 <label for="csv-upload" class="upload-btn">
-                    <i class="fa-solid fa-folder-open"></i> Browse Files
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                    Browse Files
                 </label>
             </div>
         </div>
@@ -57,7 +80,6 @@
         <!-- STEP 2: Preview Section -->
         <div id="preview-section" class="section-card" style="display:none;">
             <div class="section-header">
-                <i class="fa-solid fa-table section-icon"></i>
                 <h2>Data Preview</h2>
                 <p id="preview-meta">Showing first 10 rows</p>
             </div>
@@ -71,14 +93,17 @@
 
             <div class="action-bar">
                 <button class="action-btn btn-secondary" onclick="resetUpload()">
-                    <i class="fa-solid fa-arrow-rotate-left"></i> Change File
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.48"/></svg>
+                    Change File
                 </button>
                 <div class="action-bar-right">
                     <button class="action-btn btn-primary" onclick="goToAnalyse()">
-                        <i class="fa-solid fa-chart-line"></i> Analyse
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        Analyse
                     </button>
                     <button class="action-btn btn-gold" id="convert-btn" onclick="convertAndDownload()">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i> Download Predictions
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        Download Predictions
                     </button>
                 </div>
             </div>
@@ -89,7 +114,9 @@
     <!-- Logout Popup -->
     <div class="logout-overlay" id="logout-overlay">
         <div class="logout-popup">
-            <div class="popup-icon"><i class="fa-solid fa-circle-exclamation"></i></div>
+            <div class="popup-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
             <h3>Logout Confirmation</h3>
             <p>Are you sure you want to log out of your session?</p>
             <div class="popup-actions">
@@ -101,7 +128,7 @@
 
     <!-- Toast -->
     <div id="toast" class="toast" style="display:none;">
-        <i class="fa-solid fa-circle-info"></i>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         <span id="toast-msg"></span>
     </div>
 

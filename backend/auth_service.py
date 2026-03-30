@@ -1,4 +1,5 @@
 import os
+import uuid
 import socket
 import smtplib
 import ssl
@@ -6,6 +7,7 @@ import random
 import string
 import re
 import bcrypt
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 from datetime import datetime, timezone, timedelta
 from supabase_client import supabase
 from dotenv import load_dotenv
@@ -15,7 +17,7 @@ load_dotenv(override=True)
 def generate_otp(length=6):
     return ''.join(random.choices(string.digits, k=length))
 
-def send_otp_email(receiver_email, otp):
+def send_otp_email(receiver_email, otp, agenda="login"):
     """Send OTP via email using SMTP."""
     sender_email = os.getenv("MAIL_USERNAME")
     password = os.getenv("MAIL_PASSWORD")
@@ -24,13 +26,14 @@ def send_otp_email(receiver_email, otp):
         print("Error: Mail credentials not found in environment variables.")
         return False
 
-    message = f"""\
-Subject: Your Login Verification Code
+    if agenda == "change_password":
+        subject = "Your Password Change Verification Code"
+        body = f"Your verification code to change your password is: {otp}\n\nThis code will expire in 2 minutes.\nIf you did not request this, please ignore this email."
+    else:
+        subject = "Your Login Verification Code"
+        body = f"Your login verification code is: {otp}\n\nThis code will expire in 2 minutes."
 
-Your verification code is: {otp}
-
-This code will expire in 2 minutes.
-"""
+    message = f"Subject: {subject}\n\n{body}"
 
     context = ssl.create_default_context()
     try:
@@ -42,7 +45,7 @@ This code will expire in 2 minutes.
         print(f"Failed to send email: {e}")
         return False
 
-def store_otp(email, otp, role):
+def store_otp(email, otp, role, agenda="login"):
     """Upsert OTP into Supabase otp_store table with 2-minute expiry."""
     try:
         expires_at = (datetime.now(timezone.utc) + timedelta(minutes=2)).isoformat()
@@ -50,9 +53,10 @@ def store_otp(email, otp, role):
             "email": email,
             "otp": otp,
             "role": role,
+            "agenda": agenda,
             "expires_at": expires_at
         }).execute()
-        print(f"[OTP] Stored OTP for {email}: {res.data}")
+        print(f"[OTP] Stored OTP for {email} (agenda={agenda}): {res.data}")
     except Exception as e:
         print(f"[OTP] Failed to store OTP for {email}: {e}")
 
@@ -104,12 +108,18 @@ def authenticate_user(email, password):
 
     if not password_updated:
         try:
-            auth_response = supabase.auth.sign_in_with_password({
-                "email": email,
-                "password": password
-            })
+            def _supabase_signin():
+                return supabase.auth.sign_in_with_password({
+                    "email": email,
+                    "password": password
+                })
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(_supabase_signin)
+                auth_response = future.result(timeout=5)  # fail fast after 5 s
             if auth_response and auth_response.user:
                 supabase_auth_ok = True
+        except FuturesTimeoutError:
+            print("Supabase Auth sign-in timed out (will try DB fallback)")
         except Exception as e:
             print(f"Supabase Auth sign-in failed (will try DB fallback): {e}")
 

@@ -69,8 +69,8 @@ def login():
     if user:
         otp = generate_otp()
         print(f"[Login] Auth success for {email}, role={user['role']}, otp={otp}")
-        store_otp(email, otp, user["role"])
-        email_sent = send_otp_email(email, otp)
+        store_otp(email, otp, user["role"], agenda="login")
+        email_sent = send_otp_email(email, otp, agenda="login")
         
         if email_sent:
             return jsonify({"success": True, "message": "OTP sent to email", "step": "otp_sent"})
@@ -324,8 +324,8 @@ def change_password_request_otp():
         return jsonify({"success": False, "message": "User not found"}), 404
 
     otp = generate_otp()
-    store_otp(email, otp, "change_password")
-    email_sent = send_otp_email(email, otp)
+    store_otp(email, otp, "change_password", agenda="change_password")
+    email_sent = send_otp_email(email, otp, agenda="change_password")
     if email_sent:
         return jsonify({"success": True, "message": "OTP sent to your email"})
     return jsonify({"success": False, "message": "Failed to send OTP"}), 500

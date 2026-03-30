@@ -1,4 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Load saved profile photo from localStorage immediately
+    const savedAvatar = localStorage.getItem('profileImage');
+    if (savedAvatar) {
+        const navImg = document.getElementById('nav-profile-img');
+        const mainImg = document.getElementById('main-profile-img');
+        if (navImg) navImg.src = savedAvatar;
+        if (mainImg) mainImg.src = savedAvatar;
+    }
     const userEmail = localStorage.getItem('user_email');
     if (userEmail) {
         fetch(`http://127.0.0.1:5000/api/profile?email=${encodeURIComponent(userEmail)}`)
@@ -63,6 +71,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Update both main profile image and navbar thumbnail immediately
                 mainProfileImg.src = base64Avatar;
                 navProfileImg.src = base64Avatar;
+
+                // Save to localStorage so dashboards and other pages sync instantly
+                localStorage.setItem('profileImage', base64Avatar);
 
                 // Save to Backend
                 fetch('http://127.0.0.1:5000/api/profile/avatar', {
