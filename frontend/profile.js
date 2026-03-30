@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch(`http://127.0.0.1:5000/user-details?email=${encodeURIComponent(userEmail)}`)
             .then(response => response.json())
             .then(data => {
-                if (data.success && data.ip_address && data.ip_address !== '127.0.0.1') {
+                if (data.success && data.ip_address) {
                     document.getElementById('user-ip').textContent = data.ip_address;
                 } else {
                     // Fallback: fetch public IP from ipify

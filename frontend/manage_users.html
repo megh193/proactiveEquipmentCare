@@ -6,71 +6,81 @@
     <title>Manage Users – Proactive Equipment Care</title>
     <meta name="description" content="Super Admin User Management Dashboard – add, view, and delete users.">
 
-    <!-- Google Fonts -->
+    <!-- Google Fonts & FontAwesome -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
+    
     <link rel="stylesheet" href="manage_users.css">
+    <link rel="stylesheet" href="dark_mode.css">
 </head>
 <body>
 
-    <!-- ─── Navbar ─── -->
-    <nav class="navbar">
-        <div class="logo">Proactive Equipment Care</div>
-        <div class="nav-links">
-            <button class="nav-btn" onclick="window.location.href='super_admin_dashboard.html'">
-                <i class="fa-solid fa-house"></i> Home
+    <!-- Tall Blue Header Background -->
+    <header class="top-header-bg">
+        <div class="header-left">
+            <div class="logo-icon">
+                <i class="fa-solid fa-users-gear" style="color:white; font-size: 1.2rem;"></i>
+            </div>
+            <div class="header-titles">
+                <h1>Proactive Equipment Care</h1>
+                <span class="header-badge">User Management Portal</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <button class="dark-mode-btn">
+                <i class="fa-solid fa-moon"></i> Dark Mode
             </button>
-            <button class="nav-btn" onclick="window.location.href='super_admin_profile.html'">
-                <i class="fa-solid fa-arrow-left"></i> Back to Profile
+            <button class="logout-btn-header" onclick="showLogoutPopup()">
+                <i class="fa-solid fa-right-from-bracket"></i> Logout
             </button>
-            <div class="profile-dropdown">
-                <button class="nav-btn profile-icon-btn">
+        </div>
+    </header>
+
+    <!-- Main Content Container with Negative Margin -->
+    <main class="dashboard-content">
+
+        <!-- Pill Navigation Bar -->
+        <div class="pill-nav" style="margin-top: 2rem;">
+            <div class="pill-list">
+                <button class="pill-btn" onclick="window.location.href='super_admin_dashboard.html'">Data Upload</button>
+                <button class="pill-btn active">Manage Users</button>
+                <button class="pill-btn" onclick="window.location.href='super_admin_profile.html'">Profile & Settings</button>
+            </div>
+            <div class="pill-actions">
+                <button class="settings-btn" onclick="window.location.href='super_admin_profile.html'">
                     <img src="default_avatar.svg" alt="Profile" class="profile-avatar" id="nav-profile-img"
-                         onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'32\' height=\'32\' viewBox=\'0 0 24 24\' fill=\'%23cfd8dc\' stroke=\'%23607d8b\' stroke-width=\'1.5\'%3E%3Cpath d=\'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\'/%3E%3Ccircle cx=\'12\' cy=\'7\' r=\'4\'/%3E%3C/svg%3E'">
+                        onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'32\' height=\'32\' viewBox=\'0 0 24 24\' fill=\'%23cfd8dc\' stroke=\'%23607d8b\' stroke-width=\'1.5\'%3E%3Cpath d=\'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\'/%3E%3Ccircle cx=\'12\' cy=\'7\' r=\'4\'/%3E%3C/svg%3E'">
+                    My Account
                 </button>
-                <div class="dropdown-menu">
-                    <button class="dropdown-item" onclick="window.location.href='super_admin_profile.html'">
-                        <i class="fa-solid fa-user"></i> Profile
-                    </button>
-                    <button class="dropdown-item logout-item" onclick="showLogoutPopup()">
-                        <i class="fa-solid fa-right-from-bracket"></i> Logout
-                    </button>
+            </div>
+        </div>
+
+        <!-- ─── Page Header ─── -->
+        <div class="page-header">
+            <div class="header-content">
+                <div class="header-icon"><i class="fa-solid fa-users-gear"></i></div>
+                <div>
+                    <h2 class="header-title" style="font-size:1.4rem; font-weight:700;">User Management</h2>
+                    <p class="header-subtitle" style="color:#64748b; margin-top:0.2rem;">Add, view and remove users from the platform</p>
                 </div>
             </div>
-        </div>
-    </nav>
 
-    <!-- ─── Page Header ─── -->
-    <div class="page-header">
-        <div class="header-content">
-            <div class="header-icon"><i class="fa-solid fa-users-gear"></i></div>
-            <div>
-                <h1 class="header-title">User Management</h1>
-                <p class="header-subtitle">Add, view and remove users from the platform</p>
+            <!-- Tabs -->
+            <div class="tab-bar">
+                <button class="tab-btn active" id="tab-users" onclick="switchTab('users')">
+                    <i class="fa-solid fa-users"></i> All Users
+                </button>
+                <button class="tab-btn" id="tab-add" onclick="switchTab('add')">
+                    <i class="fa-solid fa-user-plus"></i> Add User
+                </button>
             </div>
         </div>
-
-        <!-- Tabs -->
-        <div class="tab-bar">
-            <button class="tab-btn active" id="tab-users" onclick="switchTab('users')">
-                <i class="fa-solid fa-users"></i> All Users
-            </button>
-            <button class="tab-btn" id="tab-add" onclick="switchTab('add')">
-                <i class="fa-solid fa-user-plus"></i> Add User
-            </button>
-        </div>
-    </div>
-
-    <!-- ─── Main Content ─── -->
-    <main class="main-content">
 
         <!-- All Users Tab -->
         <div id="panel-users" class="tab-panel">
             <div class="panel-card">
                 <div class="panel-card-header">
-                    <h2><i class="fa-solid fa-list-ul"></i> Registered Users</h2>
+                    <h2 style="font-size:1.1rem; font-weight:700;"><i class="fa-solid fa-list-ul"></i> Registered Users</h2>
                     <button class="refresh-btn" onclick="loadUsers()" title="Refresh list">
                         <i class="fa-solid fa-rotate"></i>
                     </button>
@@ -79,13 +89,13 @@
                 <!-- Loading State -->
                 <div id="users-loading" class="loading-state">
                     <div class="spinner"></div>
-                    <p>Loading users…</p>
+                    <p style="color:#64748b;">Loading users…</p>
                 </div>
 
                 <!-- Empty State -->
                 <div id="users-empty" class="empty-state" style="display:none;">
                     <i class="fa-solid fa-users-slash"></i>
-                    <p>No users found in the database.</p>
+                    <p style="color:#64748b;">No users found in the database.</p>
                 </div>
 
                 <!-- Table -->
@@ -108,9 +118,9 @@
 
         <!-- Add User Tab -->
         <div id="panel-add" class="tab-panel" style="display:none;">
-            <div class="panel-card form-card">
+            <div class="panel-card">
                 <div class="panel-card-header">
-                    <h2><i class="fa-solid fa-user-plus"></i> Create New User</h2>
+                    <h2 style="font-size:1.1rem; font-weight:700;"><i class="fa-solid fa-user-plus"></i> Create New User</h2>
                 </div>
 
                 <form id="add-user-form" onsubmit="handleAddUser(event)" novalidate>
@@ -119,7 +129,7 @@
                             <label for="inp-name">Full Name</label>
                             <div class="input-wrap">
                                 <i class="fa-solid fa-id-card input-icon"></i>
-                                <input type="text" id="inp-name" placeholder="e.g. Pratham Prajapati" autocomplete="off" required>
+                                <input type="text" id="inp-name" placeholder="e.g. John Doe" autocomplete="off" required>
                             </div>
                             <span class="field-error" id="err-name"></span>
                         </div>
@@ -149,7 +159,7 @@
                             <label for="inp-role">Role</label>
                             <div class="input-wrap select-wrap">
                                 <i class="fa-solid fa-user-shield input-icon"></i>
-                                <select id="inp-role" required>
+                                <select id="inp-role" required style="cursor:pointer;">
                                     <option value="" disabled selected>Select a role</option>
                                     <option value="admin">Admin</option>
                                     <option value="Super admin">Super Admin</option>
@@ -161,9 +171,9 @@
 
                     <div id="form-msg" class="form-msg" style="display:none;"></div>
 
-                    <button type="submit" class="submit-btn" id="submit-btn">
+                    <button type="submit" class="submit-btn" id="submit-btn" style="width:auto; min-width:160px; display:inline-flex; align-items:center; justify-content:center; gap:0.5rem;">
                         <span class="btn-text"><i class="fa-solid fa-user-plus"></i> Create User</span>
-                        <span class="btn-loader" style="display:none;"><div class="btn-spinner"></div> Creating…</span>
+                        <span class="btn-loader" style="display:none;"><div class="spinner" style="width:16px;height:16px;border-width:2px;border-top-color:white;margin:0 0.5rem 0 0;"></div> Creating…</span>
                     </button>
                 </form>
             </div>
@@ -171,7 +181,7 @@
     </main>
 
     <!-- ─── Toast Notification ─── -->
-    <div id="toast" class="toast" role="alert"></div>
+    <div id="toast" class="toast" role="alert" style="display:none; transition: all 0.3s; opacity:0; transform: translateY(10px);"></div>
 
     <!-- ─── Delete Confirmation Modal ─── -->
     <div class="overlay" id="delete-overlay">
@@ -189,7 +199,7 @@
     <!-- ─── Logout Confirmation Modal ─── -->
     <div class="overlay" id="logout-overlay">
         <div class="modal-box">
-            <div class="modal-icon warn-icon"><i class="fa-solid fa-circle-exclamation"></i></div>
+            <div class="modal-icon warn-icon"><i class="fa-solid fa-circle-exclamation" style="color:#F59E0B"></i></div>
             <h3>Logout Confirmation</h3>
             <p>Are you sure you want to log out of your session?</p>
             <div class="modal-actions">
@@ -200,5 +210,17 @@
     </div>
 
     <script src="manage_users.js"></script>
+    <script>
+        // GoToAnalyse inline definition in case manage_users.js doesn't have it
+        function goToAnalyse() {
+            var role = localStorage.getItem('role');
+            if(role === 'super_admin' || role === 'admin') {
+                window.location.href = 'analyse.html';
+            } else {
+                alert('Analysis not available');
+            }
+        }
+    </script>
+    <script src="dark_mode.js"></script>
 </body>
 </html>

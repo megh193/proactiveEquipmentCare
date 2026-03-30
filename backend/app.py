@@ -138,55 +138,109 @@ def get_users():
 @app.route('/api/users', methods=['POST'])
 def add_user():
     data = request.json
-    name = data.get('name')
-    email = data.get('email')
-    password = data.get('password')
-    role = data.get('role', 'admin')
-    # Force status to inactive on user creation
-    status = 'inactive'
-    
+    name          = data.get('name')
+    email         = data.get('email')
+    password      = data.get('password')
+    role          = data.get('role', 'admin')
+    requester_email = data.get('requester_email')   # sent by the frontend
+
     if not name or not email or not password:
         return jsonify({"success": False, "message": "Name, email, and password are required"}), 400
-    
-    auth_uid = None
-    try:
-        # Step 1: Create user in Supabase Auth
-        auth_response = supabase.auth.admin.create_user({
-            "email": email,
-            "password": password,
-            "email_confirm": True
-        })
-        if not auth_response or not auth_response.user:
-            return jsonify({"success": False, "message": "Failed to create user in Supabase Auth"}), 500
-        auth_uid = auth_response.user.id
-    except Exception as e:
-        print(f"Supabase Auth create_user failed: {e}")
-        return jsonify({"success": False, "message": f"Auth error: {str(e)}"}), 500
 
+    # ── Super-admin enforcement ───────────────────────────────────────────────
+    # Verify the requesting user is a super_admin in the database.
+    user_table = os.getenv("SUPABASE_USER_TABLE_NAME", "users_database")
+    if requester_email:
+        try:
+            req_res = supabase.table(user_table).select("Role").eq("email", requester_email).execute()
+            if not req_res.data:
+                return jsonify({"success": False, "message": "Requester not found. Access denied."}), 403
+            req_role = (req_res.data[0].get("Role") or "").lower().replace(" ", "_")
+            if req_role != "super_admin":
+                return jsonify({"success": False, "message": "Only Super Admins can create users."}), 403
+        except Exception as role_e:
+            print(f"Role check error: {role_e}")
+            return jsonify({"success": False, "message": "Could not verify requester role."}), 500
+    # (If requester_email not sent, allow through — frontend guards it)
+
+    # ── Step 1: Create/update user in Supabase Auth via REST (service key) ───
+    import requests as _req
+    supa_url = os.getenv("SUPABASE_URL")
+    svc_key  = os.getenv("SUPABASE_SERVICE_KEY")
+    auth_headers = {
+        "apikey":        svc_key,
+        "Authorization": f"Bearer {svc_key}",
+        "Content-Type":  "application/json"
+    }
+
+    auth_uid = None
+    # Try to create the user
+    create_resp = _req.post(
+        f"{supa_url}/auth/v1/admin/users",
+        headers=auth_headers,
+        json={"email": email, "password": password, "email_confirm": True}
+    )
+    if create_resp.status_code == 200:
+        auth_uid = create_resp.json().get("id")
+        print(f"[AddUser] Created Auth user {email} → uid={auth_uid}")
+    else:
+        # User might already exist — look them up
+        resp_json = create_resp.json()
+        err_msg   = resp_json.get("msg", resp_json.get("message", ""))
+        print(f"[AddUser] Auth create failed ({create_resp.status_code}): {err_msg}")
+
+        # List all users to find the existing one
+        list_resp = _req.get(
+            f"{supa_url}/auth/v1/admin/users",
+            headers=auth_headers,
+            params={"page": 1, "per_page": 1000}
+        )
+        if list_resp.status_code != 200:
+            return jsonify({"success": False, "message": f"Supabase Auth error: {err_msg}"}), 500
+
+        users_json = list_resp.json()
+        user_list  = users_json.get("users", users_json) if isinstance(users_json, dict) else users_json
+        for au in user_list:
+            if isinstance(au, dict) and au.get("email", "").lower() == email.lower():
+                auth_uid = au["id"]
+                break
+
+        if auth_uid:
+            # Update the password so the supplied credential is always correct
+            _req.put(
+                f"{supa_url}/auth/v1/admin/users/{auth_uid}",
+                headers=auth_headers,
+                json={"password": password}
+            )
+            print(f"[AddUser] Reusing existing Auth UID {auth_uid} for {email}")
+        else:
+            return jsonify({"success": False, "message": f"Auth error: {err_msg}"}), 500
+
+    # ── Step 2: Upsert in users_database ─────────────────────────────────────
     try:
-        # Step 2: Insert into users_database (no status column)
-        table_name = os.getenv("SUPABASE_USER_TABLE_NAME", "users_database")
         hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
-        response = supabase.table(table_name).insert({
-            "name": name,
-            "email": email,
-            "password": hashed_pw,
-            "Role": role
-        }).execute()
-        
+        existing  = supabase.table(user_table).select("id").eq("email", email).execute()
+
+        if existing.data:
+            response = supabase.table(user_table).update({
+                "name": name, "password": hashed_pw, "Role": role
+            }).eq("email", email).execute()
+        else:
+            response = supabase.table(user_table).insert({
+                "name": name, "email": email, "password": hashed_pw, "Role": role
+            }).execute()
+
         user_data = response.data[0]
         if "Role" in user_data:
             user_data["role"] = user_data.pop("Role")
-            
+
         return jsonify({"success": True, "message": "User added successfully", "user": user_data})
+
     except Exception as e:
-        # Rollback: delete the Auth user we just created
-        if auth_uid:
-            try:
-                supabase.auth.admin.delete_user(auth_uid)
-                print(f"Rollback: deleted Supabase Auth user {auth_uid}")
-            except Exception as rb_e:
-                print(f"Rollback failed: {rb_e}")
+        # Rollback Auth user only if we freshly created them
+        if auth_uid and create_resp.status_code == 200:
+            _req.delete(f"{supa_url}/auth/v1/admin/users/{auth_uid}", headers=auth_headers)
+            print(f"[AddUser] Rollback: deleted Auth user {auth_uid}")
         return jsonify({"success": False, "message": str(e)}), 500
 
 @app.route('/api/users/<user_id>', methods=['PUT'])

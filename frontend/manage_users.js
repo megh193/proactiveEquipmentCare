@@ -153,7 +153,7 @@ async function handleAddUser(e) {
         const res  = await fetch(`${API}/api/users`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, email, password, role })
+            body: JSON.stringify({ name, email, password, role, requester_email: localStorage.getItem('user_email') })
         });
         const data = await res.json();
 

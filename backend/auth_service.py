@@ -12,7 +12,8 @@ from datetime import datetime, timezone, timedelta
 from supabase_client import supabase
 from dotenv import load_dotenv
 
-load_dotenv(override=True)
+_env_path = os.path.join(os.path.dirname(__file__), '..', '.env')
+load_dotenv(dotenv_path=_env_path, override=True)
 
 def generate_otp(length=6):
     return ''.join(random.choices(string.digits, k=length))

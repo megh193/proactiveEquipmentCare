@@ -13,6 +13,7 @@
 
     <!-- External CSS -->
     <link rel="stylesheet" href="profile.css">
+    <link rel="stylesheet" href="dark_mode.css">
 </head>
 <body>
     <!-- Top Navbar Consistent with Dashboard -->
@@ -21,6 +22,7 @@
         <div class="nav-links">
             <button class="nav-btn analyse-btn" onclick="window.location.href='admin_dashboard.html'"><i class="fa-solid fa-gauge-high"></i> Dashboard</button>
             <button class="nav-btn analyse-btn" onclick="goToAnalyse()"><i class="fa-solid fa-chart-line"></i> Analyse</button>
+            <button class="nav-btn dark-mode-btn"><i class="fa-solid fa-moon"></i></button>
             <div class="profile-dropdown">
                 <button class="nav-btn profile-icon-btn">
                     <img src="default_avatar.svg" alt="Profile" class="profile-avatar" id="nav-profile-img">
@@ -143,6 +145,7 @@
             window.location.href = 'analyse.html';
         }
     </script>
+    <script src="dark_mode.js"></script>
 </body>
 </html>
 
