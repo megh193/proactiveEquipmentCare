@@ -450,30 +450,84 @@ def predict():
     try:
         data = pd.read_csv(file)
 
-        missing = [c for c in FEATURE_COLS if c not in data.columns]
+        # ── Normalize column names: handle case/spacing/bracket variants ──
+        col_map = {}
+        for col in data.columns:
+            col_normalized = col.strip()
+            col_map[col] = col_normalized
+        data = data.rename(columns=col_map)
+
+        # Try to find required columns with flexible matching
+        def find_col(candidates, df_columns):
+            """Find the first matching column from a list of candidate names."""
+            df_lower = {c.lower().replace(' ', '').replace('[', '').replace(']', ''): c for c in df_columns}
+            for cand in candidates:
+                key = cand.lower().replace(' ', '').replace('[', '').replace(']', '')
+                if key in df_lower:
+                    return df_lower[key]
+            return None
+
+        col_candidates = {
+            'Air temperature [K]':       ['Air temperature [K]', 'Air temperature', 'air_temperature', 'AirTemperature'],
+            'Process temperature [K]':   ['Process temperature [K]', 'Process temperature', 'process_temperature', 'ProcessTemperature'],
+            'Rotational speed [rpm]':    ['Rotational speed [rpm]', 'Rotational speed', 'rotational_speed', 'RotationalSpeed'],
+            'Torque [Nm]':               ['Torque [Nm]', 'Torque', 'torque'],
+            'Tool wear [min]':           ['Tool wear [min]', 'Tool wear', 'tool_wear', 'ToolWear'],
+        }
+
+        col_renames = {}
+        missing = []
+        for standard_name, candidates in col_candidates.items():
+            found = find_col(candidates, data.columns)
+            if found:
+                col_renames[found] = standard_name
+            else:
+                missing.append(standard_name)
+
         if missing:
-            return jsonify({"success": False, "message": f"Missing columns: {missing}"}), 400
+            return jsonify({"success": False, "message": f"Missing required columns: {missing}. Found: {list(data.columns[:10])}"}), 400
+
+        data = data.rename(columns=col_renames)
 
         if len(data) < SEQUENCE_LENGTH:
-            return jsonify({"success": False, "message": f"Need at least {SEQUENCE_LENGTH} rows of data"}), 400
+            return jsonify({"success": False, "message": f"Need at least {SEQUENCE_LENGTH} rows of data (your file has {len(data)} rows)"}), 400
+
+        # ── Fill any NaN values to avoid model errors ──
+        for fc in FEATURE_COLS:
+            data[fc] = pd.to_numeric(data[fc], errors='coerce')
+            data[fc] = data[fc].fillna(data[fc].median())
 
         X = data[FEATURE_COLS].values
+
+        # ── Build sequences ──
         sequences, indices = [], []
         for i in range(len(X) - SEQUENCE_LENGTH + 1):
             sequences.append(X[i:i + SEQUENCE_LENGTH])
             indices.append(i + SEQUENCE_LENGTH - 1)
 
-        X_seq = np.array(sequences)
+        X_seq = np.array(sequences, dtype=np.float32)
+
+        # ── Load model & predict in chunks to avoid memory spikes ──
         model = get_model()
-        preds = model.predict(X_seq, verbose=0).flatten()
+        BATCH_SIZE = 512
+        all_preds = []
+        for start in range(0, len(X_seq), BATCH_SIZE):
+            batch = X_seq[start:start + BATCH_SIZE]
+            batch_preds = model.predict(batch, verbose=0).flatten()
+            all_preds.extend(batch_preds)
+
+        preds = np.array(all_preds)
+
+        # ── Build result dataframe ──
+        timestamp_col = next((c for c in data.columns if c.lower() in ['timestamp', 'time', 'date']), None)
+        product_col   = next((c for c in data.columns if c.lower().replace(' ', '').replace('_', '') in ['productid', 'motorid', 'id']), None)
 
         result_df = pd.DataFrame({
-            'timestamp': data['Timestamp'].iloc[indices].values if 'Timestamp' in data.columns else indices,
-            'motor_id': data['Product ID'].iloc[indices].values if 'Product ID' in data.columns else [f'Motor_{i}' for i in indices],
+            'timestamp':  data[timestamp_col].iloc[indices].values if timestamp_col else indices,
+            'motor_id':   data[product_col].iloc[indices].values if product_col else [f'Motor_{i}' for i in indices],
             'failure_probability': preds,
         })
 
-        # Sort by timestamp then motor_id to match reference output
         result_df = result_df.sort_values(['timestamp', 'motor_id']).reset_index(drop=True)
 
         download = request.args.get('download', 'false').lower() == 'true'
@@ -488,16 +542,16 @@ def predict():
                 download_name='predictions.csv'
             )
 
-        # For JSON (analyse page charts) also include sensor cols
+        # JSON response with sensor columns for charts
         json_df = pd.DataFrame({
-            'timestamp': data['Timestamp'].iloc[indices].values if 'Timestamp' in data.columns else indices,
-            'motor_id': data['Product ID'].iloc[indices].values if 'Product ID' in data.columns else [f'Motor_{i}' for i in indices],
+            'timestamp':          result_df['timestamp'].values,
+            'motor_id':           result_df['motor_id'].values,
             'failure_probability': (preds * 100).round(4),
-            'air_temp': data['Air temperature [K]'].iloc[indices].values,
-            'process_temp': data['Process temperature [K]'].iloc[indices].values,
-            'rotational_speed': data['Rotational speed [rpm]'].iloc[indices].values,
-            'torque': data['Torque [Nm]'].iloc[indices].values,
-            'tool_wear': data['Tool wear [min]'].iloc[indices].values,
+            'air_temp':           data['Air temperature [K]'].iloc[indices].values,
+            'process_temp':       data['Process temperature [K]'].iloc[indices].values,
+            'rotational_speed':   data['Rotational speed [rpm]'].iloc[indices].values,
+            'torque':             data['Torque [Nm]'].iloc[indices].values,
+            'tool_wear':          data['Tool wear [min]'].iloc[indices].values,
         })
 
         return jsonify({
@@ -507,8 +561,10 @@ def predict():
         })
 
     except Exception as e:
-        print(f"Prediction error: {type(e).__name__}: {e}")
-        return jsonify({"success": False, "message": f"Prediction failed: {str(e)}"}), 500
+        import traceback
+        tb = traceback.format_exc()
+        print(f"Prediction error: {type(e).__name__}: {e}\n{tb}")
+        return jsonify({"success": False, "message": f"Prediction error: {str(e)}"}), 500
 
 
 if __name__ == '__main__':

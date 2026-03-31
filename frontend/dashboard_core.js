@@ -112,24 +112,77 @@ function updateMetricCards() {
     }
 }
 
+// ── Pagination state ──
+var currentPage = 1;
+var rowsPerPage = 10;
+
 // ── Render preview table ──
 function renderPreview() {
+    currentPage = 1;
+    renderPagedTable();
+}
+
+function renderPagedTable() {
     var thead = document.getElementById('preview-thead');
     var tbody = document.getElementById('preview-tbody');
     var meta  = document.getElementById('preview-meta');
 
-    var previewCount = Math.min(10, parsedRows.length);
-    meta.textContent = 'Showing first ' + previewCount + ' of ' + parsedRows.length + ' rows \u00B7 ' + parsedHeaders.length + ' columns';
+    var totalRows = parsedRows.length;
+    var totalPages = Math.max(1, Math.ceil(totalRows / rowsPerPage));
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    var startIdx = (currentPage - 1) * rowsPerPage;
+    var endIdx   = Math.min(startIdx + rowsPerPage, totalRows);
+
+    meta.textContent = 'Rows ' + (startIdx + 1) + '–' + endIdx + ' of ' + totalRows + ' · ' + parsedHeaders.length + ' columns';
 
     thead.innerHTML = '<tr>' + parsedHeaders.map(function (h) {
         return '<th>' + escapeHtml(h) + '</th>';
     }).join('') + '</tr>';
 
-    tbody.innerHTML = parsedRows.slice(0, previewCount).map(function (row) {
+    tbody.innerHTML = parsedRows.slice(startIdx, endIdx).map(function (row) {
         return '<tr>' + row.map(function (v) {
             return '<td>' + escapeHtml(v) + '</td>';
         }).join('') + '</tr>';
     }).join('');
+
+    // Render or update pagination controls
+    renderPagination(currentPage, totalPages);
+}
+
+function renderPagination(page, totalPages) {
+    var container = document.getElementById('table-pagination');
+    if (!container) return;
+
+    container.innerHTML = '';
+    if (totalPages <= 1) return;
+
+    // Prev button
+    var prevBtn = document.createElement('button');
+    prevBtn.className = 'page-btn' + (page <= 1 ? ' disabled' : '');
+    prevBtn.innerHTML = '&#8592; Prev';
+    prevBtn.disabled = page <= 1;
+    prevBtn.addEventListener('click', function () {
+        if (currentPage > 1) { currentPage--; renderPagedTable(); }
+    });
+    container.appendChild(prevBtn);
+
+    // Page info
+    var info = document.createElement('span');
+    info.className = 'page-info';
+    info.textContent = 'Page ' + page + ' / ' + totalPages;
+    container.appendChild(info);
+
+    // Next button
+    var nextBtn = document.createElement('button');
+    nextBtn.className = 'page-btn' + (page >= totalPages ? ' disabled' : '');
+    nextBtn.innerHTML = 'Next &#8594;';
+    nextBtn.disabled = page >= totalPages;
+    nextBtn.addEventListener('click', function () {
+        if (currentPage < totalPages) { currentPage++; renderPagedTable(); }
+    });
+    container.appendChild(nextBtn);
 }
 
 function escapeHtml(str) {

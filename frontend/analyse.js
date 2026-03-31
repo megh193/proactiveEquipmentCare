@@ -23,20 +23,27 @@ window.addEventListener('DOMContentLoaded', async () => {
     // Convert raw CSV string back to a File/Blob for FormData
     uploadedBlob = new Blob([csvRaw], { type: 'text/csv' });
 
-    try {
-        const formData = new FormData();
-        formData.append('file', uploadedBlob, filename);
-
-        const response = await fetch('http://127.0.0.1:5000/predict', {
-            method: 'POST',
-            body: formData
-        });
-
-        const result = await response.json();
-
-        if (!response.ok || !result.success) {
-            throw new Error(result.message || 'Prediction failed');
+    // Show detailed loading progress
+    const loadingMsg = document.querySelector('#loading-state p');
+    const steps = [
+        'Uploading your data...',
+        'Loading AI model (this may take a moment)...',
+        'Running predictions on all rows...',
+        'Processing results...',
+        'Almost done...'
+    ];
+    let stepIdx = 0;
+    if (loadingMsg) loadingMsg.textContent = steps[0];
+    const stepInterval = setInterval(() => {
+        stepIdx++;
+        if (stepIdx < steps.length && loadingMsg) {
+            loadingMsg.textContent = steps[stepIdx];
         }
+    }, 8000);
+
+    try {
+        const result = await fetchWithRetry(uploadedBlob, filename);
+        clearInterval(stepInterval);
 
         predictionData = result.predictions;
 
@@ -50,9 +57,57 @@ window.addEventListener('DOMContentLoaded', async () => {
         renderAll(result.total_rows, filename);
 
     } catch (err) {
+        clearInterval(stepInterval);
         showError('Prediction Failed', err.message);
     }
 });
+
+// ── Fetch with retry (up to 2 attempts, 5 min timeout each) ──
+async function fetchWithRetry(blob, filename, maxAttempts = 2) {
+    let lastError;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        const controller = new AbortController();
+        // 5-minute timeout — large LSTM datasets can take a while
+        const timeoutId = setTimeout(() => controller.abort(), 5 * 60 * 1000);
+
+        try {
+            const formData = new FormData();
+            formData.append('file', blob, filename);
+
+            const response = await fetch('http://127.0.0.1:5000/predict', {
+                method: 'POST',
+                body: formData,
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || 'Prediction failed on server');
+            }
+
+            return result;
+
+        } catch (err) {
+            clearTimeout(timeoutId);
+            lastError = err;
+
+            if (err.name === 'AbortError') {
+                lastError = new Error('The prediction timed out. The server may be busy or the dataset is very large. Please try again.');
+            }
+
+            if (attempt < maxAttempts) {
+                // Wait 3 seconds before retry
+                const loadingMsg = document.querySelector('#loading-state p');
+                if (loadingMsg) loadingMsg.textContent = `Retrying... (attempt ${attempt + 1} of ${maxAttempts})`;
+                await new Promise(resolve => setTimeout(resolve, 3000));
+            }
+        }
+    }
+    throw lastError;
+}
+
 
 // ── Render everything ──
 function renderAll(totalRows, filename) {
