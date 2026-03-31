@@ -314,22 +314,22 @@ body {
 .file-input { display: none; }
 
 .upload-btn, .btn-primary {
-    background: var(--primary-blue);
-    color: white;
+    background: white;
+    color: var(--primary-blue);
     padding: 0.75rem 1.5rem;
     border-radius: 8px;
     font-weight: 600;
     font-size: 0.9rem;
     cursor: pointer;
-    transition: background 0.2s;
-    border: none;
+    transition: all 0.2s;
+    border: 1.5px solid var(--primary-blue);
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
 }
 
 .upload-btn:hover, .btn-primary:hover {
-    background: var(--hover-blue);
+    background: #EFF6FF;
 }
 
 .btn-secondary {
@@ -354,7 +354,7 @@ body {
 }
 
 .btn-gold {
-    background: #E8B97B;
+    background: var(--primary-blue);
     color: white;
     padding: 0.75rem 1.5rem;
     border-radius: 8px;
@@ -368,7 +368,7 @@ body {
     transition: background 0.2s;
 }
 .btn-gold:hover {
-    background: #D4A362;
+    background: var(--hover-blue);
 }
 
 /* Preview Table */

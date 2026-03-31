@@ -355,11 +355,17 @@ def get_profile():
             
         profiles = get_profiles()
         user_avatar = profiles.get(email, {}).get('avatar', None)
+
+        # Fetch user name from users_database
+        user_table = os.getenv('SUPABASE_USER_TABLE_NAME', 'users_database')
+        name_res = supabase.table(user_table).select('name').eq('email', email).execute()
+        user_name = name_res.data[0]['name'] if name_res.data else None
         
         return jsonify({
             "success": True, 
             "last_login": last_login_data,
-            "avatar": user_avatar
+            "avatar": user_avatar,
+            "name": user_name
         })
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500

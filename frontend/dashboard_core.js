@@ -9,6 +9,7 @@ window.addEventListener('DOMContentLoaded', function () {
     var saved = localStorage.getItem('profileImage');
     var img = document.getElementById('nav-profile-img');
     if (saved && img) img.src = saved;
+    updateMetricCards();
 });
 
 // ── State ──
@@ -73,6 +74,42 @@ function parseCSV(text) {
             return v.trim().replace(/^"|"$/g, '');
         });
     });
+
+    // Save metrics for dashboard cards
+    var productIdIdx = parsedHeaders.findIndex(function (h) {
+        return h.toLowerCase().replace(/\s/g, '') === 'productid';
+    });
+    var uniqueMotors = 0;
+    if (productIdIdx !== -1) {
+        uniqueMotors = new Set(parsedRows.map(function (r) { return r[productIdIdx]; })).size;
+    }
+    var prevTotal = parseInt(localStorage.getItem('dash_total_rows') || '0');
+    localStorage.setItem('dash_total_rows', prevTotal + parsedRows.length);
+    localStorage.setItem('dash_unique_motors', uniqueMotors);
+    localStorage.setItem('dash_last_upload', new Date().toLocaleString());
+    updateMetricCards();
+}
+
+// ── Update metric cards from localStorage ──
+function updateMetricCards() {
+    var totalEl   = document.querySelector('.metric-card:nth-child(1) .metric-value');
+    var motorsEl  = document.querySelector('.metric-card:nth-child(2) .metric-value');
+    var alertsEl  = document.querySelector('.metric-card:nth-child(3) .metric-value');
+    var uptimeEl  = document.querySelector('.metric-card:nth-child(4) .metric-value');
+    var uptimeSubEl = document.querySelector('.metric-card:nth-child(4) .metric-sub');
+
+    var total   = localStorage.getItem('dash_total_rows');
+    var motors  = localStorage.getItem('dash_unique_motors');
+    var alerts  = localStorage.getItem('dash_critical_alerts');
+    var lastUpload = localStorage.getItem('dash_last_upload');
+
+    if (totalEl  && total)   totalEl.textContent  = parseInt(total).toLocaleString();
+    if (motorsEl && motors)  motorsEl.textContent = parseInt(motors).toLocaleString();
+    if (alertsEl && alerts)  alertsEl.textContent = alerts;
+    if (uptimeEl && lastUpload) {
+        uptimeEl.textContent = lastUpload.split(',')[0];
+        if (uptimeSubEl) uptimeSubEl.textContent = 'Last upload date';
+    }
 }
 
 // ── Render preview table ──

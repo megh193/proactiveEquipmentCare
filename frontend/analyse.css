@@ -344,11 +344,11 @@ body {
 }
 
 .btn-gold {
-    background: #E8B97B;
+    background: var(--primary-blue);
     color: white;
 }
 .btn-gold:hover {
-    background: #D4A362;
+    background: var(--hover-blue);
 }
 
 /* Popups & Modals */

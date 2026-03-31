@@ -39,6 +39,14 @@ window.addEventListener('DOMContentLoaded', async () => {
         }
 
         predictionData = result.predictions;
+
+        // Save stats for dashboard metrics
+        const probs = predictionData.map(r => r.failure_probability);
+        const criticalCount = probs.filter(p => p >= 70).length;
+        var prevAlerts = parseInt(localStorage.getItem('dash_critical_alerts') || '0');
+        localStorage.setItem('dash_critical_alerts', prevAlerts + criticalCount);
+        localStorage.setItem('dash_total_rows', predictionData.length);
+
         renderAll(result.total_rows, filename);
 
     } catch (err) {

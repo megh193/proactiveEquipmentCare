@@ -19,6 +19,19 @@ document.addEventListener('DOMContentLoaded', () => {
         emailEl.textContent = userEmail;
     }
 
+    // Fetch name from /api/profile
+    if (userEmail) {
+        fetch(`http://127.0.0.1:5000/api/profile?email=${encodeURIComponent(userEmail)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.name) {
+                    const nameEl = document.getElementById('user-name');
+                    if (nameEl) nameEl.textContent = data.name;
+                }
+            })
+            .catch(() => {});
+    }
+
     if (userEmail) {
         // Fetch User Details from Backend (IP + last login time from Supabase logs)
         fetch(`http://127.0.0.1:5000/user-details?email=${encodeURIComponent(userEmail)}`)

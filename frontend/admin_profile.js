@@ -13,6 +13,10 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
+                    if (data.name) {
+                        const nameEl = document.getElementById('user-name');
+                        if (nameEl) nameEl.textContent = data.name;
+                    }
                     // Update IP and Time
                     if (data.last_login) {
                         document.getElementById('user-ip').textContent = data.last_login.ip_address || 'Unavailable';
