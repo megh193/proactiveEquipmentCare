@@ -81,6 +81,8 @@
                 <button class="pill-btn active" onclick="window.location.href='super_admin_dashboard.html'">Data Upload</button>
                 <button class="pill-btn" onclick="goToAnalyse()">Analysis Map</button>
                 <button class="pill-btn" onclick="window.location.href='manage_users.html'">Manage Users</button>
+                <button class="pill-btn" id="pill-audit" onclick="showAuditSection()">Audit Logs</button>
+                <button class="pill-btn" id="pill-login" onclick="showLoginLogsSection()">Login Logs</button>
             </div>
             <div class="pill-actions">
                 <button class="settings-btn" onclick="window.location.href='super_admin_profile.html'">
@@ -91,7 +93,7 @@
             </div>
         </div>
 
-        <!-- Main Content Area: Upload Section -->
+        <!-- Upload Section -->
         <div id="upload-section" class="section-card">
             <div class="section-header">
                 <h2>
@@ -149,6 +151,52 @@
                         Download Predictions
                     </button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Audit Logs Section -->
+        <div id="audit-section" class="section-card" style="display:none;">
+            <div class="section-header" style="flex-direction:row; justify-content:space-between; align-items:center;">
+                <div>
+                    <h2>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                        Prediction Audit Logs
+                    </h2>
+                    <p>Every prediction run — who ran it, when, and on which CSV file.</p>
+                </div>
+                <button class="btn-gold" onclick="exportAuditCSV()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Export CSV
+                </button>
+            </div>
+            <div class="table-wrapper">
+                <table class="logs-table">
+                    <thead><tr><th>#</th><th>User</th><th>CSV File</th><th>Rows</th><th>Ran At</th></tr></thead>
+                    <tbody id="audit-tbody"><tr><td colspan="5" style="text-align:center;padding:2rem;color:#64748B;">Loading...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Login Logs Section -->
+        <div id="login-logs-section" class="section-card" style="display:none;">
+            <div class="section-header" style="flex-direction:row; justify-content:space-between; align-items:center;">
+                <div>
+                    <h2>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                        Login Logs
+                    </h2>
+                    <p>All login attempts — user, status, IP address, and timestamp.</p>
+                </div>
+                <button class="btn-gold" onclick="exportLoginCSV()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Export CSV
+                </button>
+            </div>
+            <div class="table-wrapper">
+                <table class="logs-table">
+                    <thead><tr><th>#</th><th>User</th><th>Status</th><th>IP Address</th><th>Timestamp</th></tr></thead>
+                    <tbody id="login-logs-tbody"><tr><td colspan="5" style="text-align:center;padding:2rem;color:#64748B;">Loading...</td></tr></tbody>
+                </table>
             </div>
         </div>
 

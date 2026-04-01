@@ -203,12 +203,24 @@ function resetUpload() {
     document.getElementById('upload-section').style.display = 'block';
 }
 
+// ── Log prediction audit ──
+function logPredictionAudit(csvName, rowCount) {
+    var email = localStorage.getItem('user_email');
+    if (!email) return;
+    fetch('http://127.0.0.1:5000/api/audit-logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_email: email, csv_name: csvName, row_count: rowCount })
+    }).catch(function () {}); // fire-and-forget
+}
+
 // ── Navigate to Analyse ──
 function goToAnalyse() {
     if (!uploadedFile) {
         showToast('Please upload a CSV file first.', true);
         return;
     }
+    logPredictionAudit(uploadedFile.name, parsedRows.length);
     sessionStorage.setItem('uploaded_filename', uploadedFile.name);
     var reader = new FileReader();
     reader.onload = function (e) {
@@ -245,6 +257,7 @@ function convertAndDownload() {
         return response.blob();
     })
     .then(function (blob) {
+        logPredictionAudit(uploadedFile.name, parsedRows.length);
         var url = URL.createObjectURL(blob);
         var a = document.createElement('a');
         a.href = url;

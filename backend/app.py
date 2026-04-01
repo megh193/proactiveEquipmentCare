@@ -567,6 +567,53 @@ def predict():
         return jsonify({"success": False, "message": f"Prediction error: {str(e)}"}), 500
 
 
+# ── Audit Trail Endpoints (Super Admin) ──────────────────────────────────────
+
+@app.route('/api/audit-logs', methods=['POST'])
+def log_prediction_audit():
+    """Log a prediction run: who ran it, when, on what CSV."""
+    data = request.json
+    user_email = data.get('user_email')
+    csv_name   = data.get('csv_name')
+    row_count  = data.get('row_count', 0)
+    if not user_email or not csv_name:
+        return jsonify({"success": False, "message": "user_email and csv_name are required"}), 400
+    try:
+        from datetime import datetime, timezone
+        table = os.getenv('AUDIT_LOG_TABLE_NAME', 'prediction_audit_logs')
+        supabase.table(table).insert({
+            "user_email": user_email,
+            "csv_name":   csv_name,
+            "row_count":  row_count,
+            "ran_at":     datetime.now(timezone.utc).isoformat()
+        }).execute()
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app.route('/api/audit-logs', methods=['GET'])
+def get_audit_logs():
+    """Return all prediction audit logs (super admin only)."""
+    try:
+        table = os.getenv('AUDIT_LOG_TABLE_NAME', 'prediction_audit_logs')
+        resp = supabase.table(table).select("*").order("ran_at", desc=True).execute()
+        return jsonify({"success": True, "logs": resp.data})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app.route('/api/login-logs', methods=['GET'])
+def get_login_logs():
+    """Return all login logs (super admin only)."""
+    try:
+        table = os.getenv('SUPABASE_TABLE_NAME', 'login_logs')
+        resp = supabase.table(table).select("*").order("created_at", desc=True).execute()
+        return jsonify({"success": True, "logs": resp.data})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
 if __name__ == '__main__':
     debug_mode = os.getenv('FLASK_DEBUG', 'True') == 'True'
     port = int(os.getenv('FLASK_PORT', 5000))

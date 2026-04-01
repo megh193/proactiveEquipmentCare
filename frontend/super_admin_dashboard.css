@@ -514,3 +514,55 @@ body {
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     z-index: 3000;
 }
+
+/* Audit / Login Logs Tables */
+.logs-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.logs-table thead tr {
+    background: #F8FAFC;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.5px;
+}
+
+.logs-table th {
+    padding: 1rem;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.logs-table td {
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.logs-table tbody tr:hover {
+    background: #F8FAFC;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.2rem 0.65rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-success {
+    background: #D1FAE5;
+    color: #065F46;
+}
+
+.badge-fail {
+    background: #FEE2E2;
+    color: #991B1B;
+}
