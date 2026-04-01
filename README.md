@@ -37,7 +37,10 @@ AI Codebase/
 │   ├── manage_users.html/js/css        # User management (super admin only)
 │   ├── profile.html/js/css             # User profile & avatar
 │   ├── admin_profile.html/js/css       # Admin profile page
-│   └── super_admin_profile.html/js/css # Super admin profile page
+│   ├── super_admin_profile.html/js/css # Super admin profile page
+│   ├── dashboard_core.js               # Shared upload, preview, predict & audit logic
+│   ├── dark_mode.js/css                # Dark mode toggle (shared)
+│   └── default_avatar.svg              # Fallback profile avatar
 ├── notebooks/
 │   ├── 01_data_loading.ipynb       # Load & merge raw CSVs
 │   ├── 02_data_preprocessing.ipynb # Clean & StandardScaler normalisation
@@ -90,8 +93,8 @@ Optimizer: Adam | Loss: Binary Crossentropy
 1. User submits email + password → Flask `/login`
 2. Backend performs two-tier auth:
    - **Tier 1:** Supabase Auth (`sign_in_with_password`)
-   - **Tier 2 fallback:** Direct DB password check (for legacy users)
-3. On success, a 6-digit OTP is generated and emailed via Gmail SMTP
+   - **Tier 2 fallback:** Direct DB bcrypt password check (for users who changed their password via the app)
+3. On success, a 6-digit OTP is generated and emailed via Gmail SMTP (expires in 2 minutes)
 4. User submits OTP → Flask `/verify-otp` → role-based redirect
 
 **Roles:** `super_admin` → `admin`
@@ -105,8 +108,12 @@ Optimizer: Adam | Loss: Binary Crossentropy
 | Upload CSV & view predictions | ✅ | ✅ |
 | Analyse charts | ✅ | ✅ |
 | Download predictions CSV | ✅ | ✅ |
-| Manage users (add/delete) | ❌ | ✅ |
+| Change own password (OTP-verified) | ✅ | ✅ |
+| Manage users (add/edit/delete) | ❌ | ✅ |
 | View all registered users | ❌ | ✅ |
+| View prediction audit logs | ❌ | ✅ |
+| View login logs | ❌ | ✅ |
+| Export audit & login logs as CSV | ❌ | ✅ |
 
 ---
 
@@ -125,21 +132,41 @@ Optimizer: Adam | Loss: Binary Crossentropy
 | `GET` | `/api/profile` | Get user profile + last login |
 | `POST` | `/api/profile/avatar` | Update profile avatar |
 | `POST` | `/api/validate-csv` | Validate uploaded CSV format |
+| `POST` | `/api/change-password/request-otp` | Send OTP to verify password change |
+| `POST` | `/api/change-password/verify` | Verify OTP and update password |
+| `POST` | `/api/audit-logs` | Log a prediction run (user, CSV name, row count) |
+| `GET` | `/api/audit-logs` | Retrieve all prediction audit logs (super admin) |
+| `GET` | `/api/login-logs` | Retrieve all login logs (super admin) |
 
 The `/predict` endpoint accepts a CSV file and returns JSON predictions including `failure_probability`, sensor readings, `timestamp`, and `motor_id`. Pass `?download=true` to receive a CSV file instead.
+
+---
+
+## Audit Trail
+
+Every time a prediction is run (via Analyse or Download Predictions), the system automatically logs:
+
+- **Who** ran it — the logged-in user's email
+- **When** — UTC timestamp of the run
+- **What data** — the uploaded CSV filename and row count
+
+These logs are stored in the `prediction_audit_logs` table and are accessible only to Super Admins via the **Audit Logs** tab on the Super Admin Dashboard. Logs can be exported as a CSV file for compliance or reporting purposes.
+
+Login activity (successful and failed attempts) is similarly viewable and exportable from the **Login Logs** tab.
 
 ---
 
 ## Supabase Tables
 
 ```sql
--- Login audit log
+-- Login activity log
 create table login_logs (
   id uuid default gen_random_uuid() primary key,
   user_email text,
+  user_id uuid,
   status text,
   ip_address text,
-  created_at timestamp default now()
+  created_at timestamp with time zone default now()
 );
 
 -- User accounts
@@ -149,7 +176,26 @@ create table users_database (
   email text unique,
   password text,
   "Role" text,
-  created_at timestamp default now()
+  password_updated boolean default false,
+  created_at timestamp with time zone default now()
+);
+
+-- OTP store (login & password change)
+create table otp_store (
+  email text primary key,
+  otp text,
+  role text,
+  agenda text,
+  expires_at timestamp with time zone
+);
+
+-- Prediction audit log
+create table prediction_audit_logs (
+  id uuid default gen_random_uuid() primary key,
+  user_email text not null,
+  csv_name text not null,
+  row_count integer default 0,
+  ran_at timestamp with time zone default now()
 );
 ```
 
@@ -181,6 +227,7 @@ SUPABASE_DATABASE_NAME=postgres
 SUPABASE_DATABASE_PORT=6543
 SUPABASE_TABLE_NAME=login_logs
 SUPABASE_USER_TABLE_NAME=users_database
+AUDIT_LOG_TABLE_NAME=prediction_audit_logs
 
 # Storage
 STORAGE_BUCKET_NAME=motor-raw-data
@@ -263,3 +310,5 @@ Tool wear [min]
 Optional columns used for output enrichment: `Timestamp`, `Product ID`
 
 Minimum rows required: **30** (one full sequence)
+
+> The `/predict` endpoint performs flexible column name matching — common variants such as `air_temperature`, `AirTemperature`, and `Rotational speed` are automatically recognised and mapped to the standard names.
