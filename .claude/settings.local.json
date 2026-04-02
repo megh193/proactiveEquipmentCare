@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find \"e:/Sem 8/College project/AI Codebase\" -type f \\\\\\( -name \"*.html\" -o -name \"*.jsx\" -o -name \"*.tsx\" \\\\\\) -exec basename {} \\\\;)"
+    ]
+  }
+}

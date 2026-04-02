@@ -42,7 +42,7 @@ SEQUENCE_LENGTH = int(os.getenv('SEQUENCE_LENGTH', 30))
 
 @app.route('/')
 def index():
-    return app.send_static_file('login.html')
+    return app.send_static_file('landing.html')
 
 from file_validator import validate_csv
 
@@ -612,6 +612,47 @@ def get_login_logs():
         return jsonify({"success": True, "logs": resp.data})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app.route('/api/predict-single', methods=['POST'])
+def predict_single():
+    """Predict failure probability for a single motor given 5 sensor readings."""
+    data = request.json
+    try:
+        air_temp         = float(data['air_temperature'])
+        process_temp     = float(data['process_temperature'])
+        rotational_speed = float(data['rotational_speed'])
+        torque           = float(data['torque'])
+        tool_wear        = float(data['tool_wear'])
+    except (KeyError, TypeError, ValueError):
+        return jsonify({"success": False, "message": "All 5 numeric fields are required."}), 400
+
+    # LSTM expects (batch, SEQUENCE_LENGTH, 5). Repeat the single row to fill the sequence.
+    row   = [air_temp, process_temp, rotational_speed, torque, tool_wear]
+    X     = np.array([row] * SEQUENCE_LENGTH, dtype=np.float32)   # (30, 5)
+    X_seq = np.expand_dims(X, axis=0)                              # (1, 30, 5)
+
+    try:
+        model = get_model()
+        pred  = float(model.predict(X_seq, verbose=0).flatten()[0])
+        failure_prob = round(pred * 100, 2)
+
+        if failure_prob >= 70:
+            risk_level = 'high'
+        elif failure_prob >= 30:
+            risk_level = 'medium'
+        else:
+            risk_level = 'low'
+
+        return jsonify({
+            "success": True,
+            "failure_probability": failure_prob,
+            "risk_level": risk_level
+        })
+    except Exception as e:
+        import traceback
+        print(f"[SinglePredict] Error: {e}\n{traceback.format_exc()}")
+        return jsonify({"success": False, "message": f"Prediction error: {str(e)}"}), 500
 
 
 if __name__ == '__main__':

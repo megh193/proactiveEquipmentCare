@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proactive Equipment Care — AI Motor Failure Prediction</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="landing.css">
+</head>
+<body>
+
+<!-- ===== NAVBAR ===== -->
+<nav class="navbar" id="navbar">
+    <div class="nav-wrap">
+        <a class="nav-brand" href="#">
+            <div class="brand-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+            </div>
+            <span>Proactive Equipment Care</span>
+        </a>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#howitworks">How It Works</a>
+            <a href="#technology">Technology</a>
+        </div>
+        <a href="login.html" class="nav-signin">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            Sign In
+        </a>
+    </div>
+</nav>
+
+<!-- ===== HERO ===== -->
+<section class="hero" id="hero">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="hero-grid-overlay"></div>
+
+    <div class="hero-wrap">
+        <!-- Left Content -->
+        <div class="hero-left">
+            <div class="hero-badge">
+                <span class="badge-pulse"></span>
+                AI-Powered Predictive Maintenance
+            </div>
+            <h1 class="hero-h1">
+                Predict Motor Failure<br>
+                <span class="grad-text">Before It Strikes</span>
+            </h1>
+            <p class="hero-p">
+                Deploy our advanced LSTM neural network to analyze industrial motor sensor data and detect failure patterns — reducing downtime by up to 73% and cutting maintenance costs significantly.
+            </p>
+            <div class="hero-actions">
+                <a href="login.html" class="btn-hero-primary">
+                    Get Started
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </a>
+                <a href="#howitworks" class="btn-hero-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+                    See How It Works
+                </a>
+            </div>
+            <div class="hero-mini-stats">
+                <div class="mini-stat">
+                    <div class="mini-stat-num" id="stat-accuracy">0%</div>
+                    <div class="mini-stat-label">Model Accuracy</div>
+                </div>
+                <div class="mini-stat-sep"></div>
+                <div class="mini-stat">
+                    <div class="mini-stat-num" id="stat-speed">&lt;1s</div>
+                    <div class="mini-stat-label">Prediction Speed</div>
+                </div>
+                <div class="mini-stat-sep"></div>
+                <div class="mini-stat">
+                    <div class="mini-stat-num" id="stat-params">0</div>
+                    <div class="mini-stat-label">Sensor Parameters</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Visual: Animated Dashboard Card -->
+        <div class="hero-right">
+            <div class="hero-card" id="heroCard">
+                <div class="hcard-header">
+                    <div class="hcard-dots">
+                        <span style="background:#FF5F57"></span>
+                        <span style="background:#FEBC2E"></span>
+                        <span style="background:#28C840"></span>
+                    </div>
+                    <div class="hcard-title">Live Motor Risk Analysis</div>
+                    <div class="hcard-live"><span class="live-dot"></span>Live</div>
+                </div>
+                <div class="hcard-body">
+                    <!-- SVG Gauge -->
+                    <div class="gauge-wrap">
+                        <svg class="gauge-svg" viewBox="0 0 220 130" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color:#10B981"/>
+                                    <stop offset="45%" style="stop-color:#F59E0B"/>
+                                    <stop offset="100%" style="stop-color:#EF4444"/>
+                                </linearGradient>
+                            </defs>
+                            <!-- Track -->
+                            <path d="M 25 105 A 85 85 0 0 1 195 105" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="14" stroke-linecap="round"/>
+                            <!-- Fill -->
+                            <path id="gaugeFill" d="M 25 105 A 85 85 0 0 1 195 105" fill="none" stroke="url(#gaugeGrad)" stroke-width="14" stroke-linecap="round" stroke-dasharray="267" stroke-dashoffset="267"/>
+                            <!-- Center text -->
+                            <text x="110" y="100" text-anchor="middle" fill="white" font-size="30" font-weight="800" font-family="Inter,sans-serif" id="gaugeText">0%</text>
+                            <text x="110" y="118" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="9" font-family="Inter,sans-serif" letter-spacing="1">FAILURE PROBABILITY</text>
+                            <!-- Scale markers -->
+                            <text x="18" y="118" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="8" font-family="Inter,sans-serif">0</text>
+                            <text x="202" y="118" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="8" font-family="Inter,sans-serif">100</text>
+                        </svg>
+                    </div>
+                    <!-- Motor list -->
+                    <div class="hcard-motors">
+                        <div class="hcard-motor">
+                            <div class="motor-name">Motor M-001</div>
+                            <div class="motor-bar-wrap"><div class="motor-bar" style="width:0%;background:#EF4444" data-target="78"></div></div>
+                            <div class="motor-pct high-risk">78%</div>
+                        </div>
+                        <div class="hcard-motor">
+                            <div class="motor-name">Motor M-042</div>
+                            <div class="motor-bar-wrap"><div class="motor-bar" style="width:0%;background:#F59E0B" data-target="45"></div></div>
+                            <div class="motor-pct med-risk">45%</div>
+                        </div>
+                        <div class="hcard-motor">
+                            <div class="motor-name">Motor M-107</div>
+                            <div class="motor-bar-wrap"><div class="motor-bar" style="width:0%;background:#10B981" data-target="12"></div></div>
+                            <div class="motor-pct low-risk">12%</div>
+                        </div>
+                        <div class="hcard-motor">
+                            <div class="motor-name">Motor M-203</div>
+                            <div class="motor-bar-wrap"><div class="motor-bar" style="width:0%;background:#EF4444" data-target="91"></div></div>
+                            <div class="motor-pct high-risk">91%</div>
+                        </div>
+                    </div>
+                    <!-- Risk badges -->
+                    <div class="hcard-badges">
+                        <span class="risk-badge risk-high">2 Critical</span>
+                        <span class="risk-badge risk-med">1 Warning</span>
+                        <span class="risk-badge risk-low">1 Healthy</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Floating chips around the card -->
+            <div class="float-chip chip-1">
+                <div class="chip-icon green-chip">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                </div>
+                <div class="chip-text">
+                    <div class="chip-label">Torque: 47.3 Nm</div>
+                    <div class="chip-sub">Normal Range</div>
+                </div>
+            </div>
+            <div class="float-chip chip-2">
+                <div class="chip-icon red-chip">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                </div>
+                <div class="chip-text">
+                    <div class="chip-label">Alert: M-203</div>
+                    <div class="chip-sub" style="color:#EF4444">Critical Risk</div>
+                </div>
+            </div>
+            <div class="float-chip chip-3">
+                <div class="chip-icon blue-chip">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2B64F6" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15"/></svg>
+                </div>
+                <div class="chip-text">
+                    <div class="chip-label">34 Motors</div>
+                    <div class="chip-sub">Active & Monitored</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scroll cue -->
+    <div class="scroll-cue">
+        <div class="scroll-cue-line"></div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+</section>
+
+<!-- ===== FEATURES ===== -->
+<section class="features-sec" id="features">
+    <div class="section-wrap">
+        <div class="section-label">Features</div>
+        <h2 class="section-h2">Everything for <span class="grad-text-blue">Smart Maintenance</span></h2>
+        <p class="section-sub">A complete predictive maintenance platform — from bulk CSV analysis to single-motor real-time prediction.</p>
+
+        <div class="features-grid">
+            <div class="feat-card" data-delay="0">
+                <div class="feat-icon-wrap" style="background:linear-gradient(135deg,rgba(43,100,246,0.15),rgba(124,58,237,0.15));border-color:rgba(43,100,246,0.2)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="url(#grad1)" stroke-width="2"><defs><linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#2B64F6"/><stop offset="100%" style="stop-color:#7C3AED"/></linearGradient></defs><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                </div>
+                <h3 class="feat-h3">LSTM Neural Network</h3>
+                <p class="feat-p">Stacked Long Short-Term Memory architecture with 30,881 trainable parameters processes 30-timestep sequences for precise temporal pattern recognition.</p>
+            </div>
+
+            <div class="feat-card" data-delay="80">
+                <div class="feat-icon-wrap" style="background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(5,150,105,0.15));border-color:rgba(16,185,129,0.2)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                </div>
+                <h3 class="feat-h3">5-Sensor Analysis</h3>
+                <p class="feat-p">Simultaneously analyzes air temperature, process temperature, rotational speed, torque, and tool wear for comprehensive motor health assessment.</p>
+            </div>
+
+            <div class="feat-card" data-delay="160">
+                <div class="feat-icon-wrap" style="background:linear-gradient(135deg,rgba(239,68,68,0.15),rgba(220,38,38,0.15));border-color:rgba(239,68,68,0.2)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                </div>
+                <h3 class="feat-h3">Real-time Risk Classification</h3>
+                <p class="feat-p">Every prediction is instantly classified as High Risk (≥70%), Medium Risk (30–70%), or Low Risk (&lt;30%) with color-coded visual indicators.</p>
+            </div>
+
+            <div class="feat-card" data-delay="0">
+                <div class="feat-icon-wrap" style="background:linear-gradient(135deg,rgba(245,158,11,0.15),rgba(217,119,6,0.15));border-color:rgba(245,158,11,0.2)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                </div>
+                <h3 class="feat-h3">Batch CSV Processing</h3>
+                <p class="feat-p">Upload thousands of motor sensor records and process them in seconds. Intelligent column mapping handles any CSV format automatically.</p>
+            </div>
+
+            <div class="feat-card" data-delay="80">
+                <div class="feat-icon-wrap" style="background:linear-gradient(135deg,rgba(56,189,248,0.15),rgba(14,165,233,0.15));border-color:rgba(56,189,248,0.2)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                </div>
+                <h3 class="feat-h3">Single Motor Mode</h3>
+                <p class="feat-p">Enter real-time sensor readings for an individual motor and get an instant failure probability score — perfect for spot-checking field equipment.</p>
+            </div>
+
+            <div class="feat-card" data-delay="160">
+                <div class="feat-icon-wrap" style="background:linear-gradient(135deg,rgba(139,92,246,0.15),rgba(109,40,217,0.15));border-color:rgba(139,92,246,0.2)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <h3 class="feat-h3">Complete Audit Trail</h3>
+                <p class="feat-p">Every prediction run is logged with user identity, timestamp, CSV filename, and record count. Full compliance and accountability out of the box.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== HOW IT WORKS ===== -->
+<section class="hiw-sec" id="howitworks">
+    <div class="section-wrap">
+        <div class="section-label">Process</div>
+        <h2 class="section-h2">From Data to <span class="grad-text-blue">Insights</span> in Seconds</h2>
+        <p class="section-sub">Three simple steps to protect your industrial equipment from unexpected failures.</p>
+
+        <div class="hiw-grid">
+            <div class="hiw-step" data-delay="0">
+                <div class="hiw-num">01</div>
+                <div class="hiw-icon-wrap">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2B64F6" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </div>
+                <h3 class="hiw-h3">Upload Sensor Data</h3>
+                <p class="hiw-p">Upload a CSV file with motor sensor readings, or enter values manually for a single-motor spot check. Our system intelligently maps any column format.</p>
+                <div class="hiw-tag">CSV · Manual Entry · Drag & Drop</div>
+            </div>
+
+            <div class="hiw-connector">
+                <div class="connector-line"></div>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2B64F6" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </div>
+
+            <div class="hiw-step" data-delay="150">
+                <div class="hiw-num">02</div>
+                <div class="hiw-icon-wrap">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="1.8"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                </div>
+                <h3 class="hiw-h3">AI Analyzes Patterns</h3>
+                <p class="hiw-p">The LSTM neural network processes 30-timestep sequences of sensor data, detecting temporal patterns and anomalies that precede motor failures.</p>
+                <div class="hiw-tag">LSTM · 30 Timesteps · Deep Learning</div>
+            </div>
+
+            <div class="hiw-connector">
+                <div class="connector-line"></div>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2B64F6" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </div>
+
+            <div class="hiw-step" data-delay="300">
+                <div class="hiw-num">03</div>
+                <div class="hiw-icon-wrap">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="1.8"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                </div>
+                <h3 class="hiw-h3">Get Actionable Insights</h3>
+                <p class="hiw-p">View interactive charts, risk classifications per motor, and downloadable prediction reports. Take preventive action before failures and downtime occur.</p>
+                <div class="hiw-tag">Charts · PDF Export · Risk Alerts</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== TECHNOLOGY STATS ===== -->
+<section class="tech-sec" id="technology">
+    <div class="tech-bg-orb"></div>
+    <div class="section-wrap">
+        <div class="section-label" style="color:rgba(255,255,255,0.5)">Technology</div>
+        <h2 class="section-h2" style="color:white">Built on Cutting-Edge <span class="grad-text">Deep Learning</span></h2>
+        <p class="section-sub" style="color:rgba(255,255,255,0.5)">Powered by a production-grade LSTM architecture trained on thousands of industrial motor sensor records.</p>
+
+        <div class="tech-stats-grid">
+            <div class="tech-stat-card" data-delay="0">
+                <div class="ts-icon" style="color:#2B64F6">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                </div>
+                <div class="ts-num" data-count="30881">0</div>
+                <div class="ts-label">Model Parameters</div>
+                <div class="ts-sub">Stacked LSTM (64+32) → Dense (16) → Sigmoid</div>
+            </div>
+            <div class="tech-stat-card" data-delay="100">
+                <div class="ts-icon" style="color:#7C3AED">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
+                <div class="ts-num" data-count="30" data-suffix=" steps">0</div>
+                <div class="ts-label">Sequence Length</div>
+                <div class="ts-sub">30 consecutive sensor readings per prediction</div>
+            </div>
+            <div class="tech-stat-card" data-delay="200">
+                <div class="ts-icon" style="color:#10B981">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                </div>
+                <div class="ts-num" data-count="512" data-suffix="/batch">0</div>
+                <div class="ts-label">Batch Processing</div>
+                <div class="ts-sub">Optimized batch inference prevents memory spikes</div>
+            </div>
+            <div class="tech-stat-card" data-delay="300">
+                <div class="ts-icon" style="color:#F59E0B">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                </div>
+                <div class="ts-num" data-count="5" data-suffix=" features">0</div>
+                <div class="ts-label">Input Features</div>
+                <div class="ts-sub">Temperature, Speed, Torque, and Tool Wear</div>
+            </div>
+        </div>
+
+        <!-- Tech stack -->
+        <div class="tech-stack">
+            <span class="tech-pill">TensorFlow / Keras</span>
+            <span class="tech-pill">Python Flask</span>
+            <span class="tech-pill">Supabase (PostgreSQL)</span>
+            <span class="tech-pill">NumPy / Pandas</span>
+            <span class="tech-pill">Chart.js</span>
+            <span class="tech-pill">LSTM Architecture</span>
+        </div>
+    </div>
+</section>
+
+<!-- ===== CTA SECTION ===== -->
+<section class="cta-sec">
+    <div class="cta-orb"></div>
+    <div class="section-wrap" style="text-align:center;">
+        <div class="cta-badge">Ready to get started?</div>
+        <h2 class="cta-h2">Protect Your Equipment<br><span class="grad-text-blue">Starting Today</span></h2>
+        <p class="cta-p">Join the platform that uses AI to detect motor failures before they cost you downtime and resources.</p>
+        <div class="cta-actions">
+            <a href="login.html" class="btn-cta-primary">
+                Sign In to Dashboard
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </a>
+        </div>
+        <div class="cta-note">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Role-based access · OTP-secured login · Full audit trail
+        </div>
+    </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+    <div class="footer-wrap">
+        <div class="footer-brand">
+            <div class="brand-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+            </div>
+            <span class="footer-name">Proactive Equipment Care</span>
+        </div>
+        <div class="footer-links">
+            <a href="#features">Features</a>
+            <a href="#howitworks">How It Works</a>
+            <a href="#technology">Technology</a>
+            <a href="login.html">Login</a>
+        </div>
+        <div class="footer-copy">
+            &copy; 2026 Proactive Equipment Care. Built with TensorFlow &amp; Flask.
+        </div>
+    </div>
+</footer>
+
+<script src="landing.js"></script>
+</body>
+</html>
