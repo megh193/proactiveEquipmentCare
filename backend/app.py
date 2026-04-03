@@ -362,7 +362,8 @@ def get_profile():
         user_name = name_res.data[0]['name'] if name_res.data else None
         
         return jsonify({
-            "success": True, 
+            "success": True,
+            "email": email,
             "last_login": last_login_data,
             "avatar": user_avatar,
             "name": user_name

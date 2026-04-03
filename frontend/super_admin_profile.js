@@ -17,6 +17,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         const nameEl = document.getElementById('user-name');
                         if (nameEl) nameEl.textContent = data.name;
                     }
+                    if (data.email) {
+                        const emailEl = document.getElementById('user-email');
+                        if (emailEl) emailEl.textContent = data.email;
+                    }
                     // Update IP and Time
                     if (data.last_login) {
                         const ipEl = document.getElementById('user-ip');
