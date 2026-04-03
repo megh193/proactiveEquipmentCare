@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function () {
    TAB SWITCHING
    =================================================== */
 function switchTab(tab) {
-    document.querySelectorAll('.pill-btn').forEach(function (b) {
+    document.querySelectorAll('.nav-tab').forEach(function (b) {
         b.classList.remove('active');
     });
 

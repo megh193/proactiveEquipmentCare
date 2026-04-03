@@ -92,25 +92,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load existing image from localStorage if available
     const savedImage = localStorage.getItem('profileImage');
     if (savedImage) {
-        mainProfileImg.src = savedImage;
-        navProfileImg.src = savedImage;
+        if (mainProfileImg) mainProfileImg.src = savedImage;
+        if (navProfileImg)  navProfileImg.src  = savedImage;
     }
 
-    profileUpload.addEventListener('change', function(event) {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
+    if (profileUpload) {
+        profileUpload.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
 
-            reader.onload = function(e) {
-                const newImgData = e.target.result;
-                mainProfileImg.src = newImgData;
-                navProfileImg.src = newImgData;
-                localStorage.setItem('profileImage', newImgData);
-            };
+                reader.onload = function(e) {
+                    const newImgData = e.target.result;
+                    if (mainProfileImg) mainProfileImg.src = newImgData;
+                    if (navProfileImg)  navProfileImg.src  = newImgData;
+                    localStorage.setItem('profileImage', newImgData);
+                };
 
-            reader.readAsDataURL(file);
-        }
-    });
+                reader.readAsDataURL(file);
+            }
+        });
+    }
 
     // Close dropdown when clicking outside
     window.addEventListener('click', function(e) {
