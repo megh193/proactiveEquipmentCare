@@ -29,13 +29,13 @@ AI Codebase/
 │   ├── download_raw_data.py    # Downloads raw sensor CSV from Supabase storage
 │   └── predict_and_export.py   # Batch prediction script (offline use)
 ├── frontend/
+│   ├── landing.html/js/css             # Public landing page
 │   ├── login.html/js/css               # Login page with OTP modal
-│   ├── default_dashboard.html/js/css   # Dashboard (viewer role)
-│   ├── admin_dashboard.html/js         # Dashboard (admin role)
-│   ├── super_admin_dashboard.html/js   # Dashboard (super admin role)
+│   ├── admin_dashboard.html/js/css     # Dashboard (admin role)
+│   ├── super_admin_dashboard.html/js/css # Dashboard (super admin role)
 │   ├── analyse.html/js/css             # Prediction charts & analysis
 │   ├── manage_users.html/js/css        # User management (super admin only)
-│   ├── profile.html/js/css             # User profile & avatar
+│   ├── profile.html/js/css             # Shared profile base
 │   ├── admin_profile.html/js/css       # Admin profile page
 │   ├── super_admin_profile.html/js/css # Super admin profile page
 │   ├── dashboard_core.js               # Shared upload, preview, predict & audit logic
@@ -137,6 +137,7 @@ Optimizer: Adam | Loss: Binary Crossentropy
 | `POST` | `/api/audit-logs` | Log a prediction run (user, CSV name, row count) |
 | `GET` | `/api/audit-logs` | Retrieve all prediction audit logs (super admin) |
 | `GET` | `/api/login-logs` | Retrieve all login logs (super admin) |
+| `POST` | `/api/predict-single` | Run prediction on a single set of sensor readings |
 
 The `/predict` endpoint accepts a CSV file and returns JSON predictions including `failure_probability`, sensor readings, `timestamp`, and `motor_id`. Pass `?download=true` to receive a CSV file instead.
 
