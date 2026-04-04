@@ -24,8 +24,10 @@ app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Lazy-load LSTM model once
+# Lazy-load LSTM model and scaler once
 _model = None
+_scaler = None
+
 def get_model():
     global _model
     if _model is None:
@@ -33,6 +35,17 @@ def get_model():
         model_path = os.getenv('MODEL_PATH', os.path.join(BASE_DIR, 'models', 'motor_lstm_model.h5'))
         _model = keras.models.load_model(model_path)
     return _model
+
+def get_scaler():
+    global _scaler
+    if _scaler is None:
+        import joblib
+        scaler_path = os.path.join(BASE_DIR, 'models', 'scaler.pkl')
+        if os.path.exists(scaler_path):
+            _scaler = joblib.load(scaler_path)
+        else:
+            print("[Warning] scaler.pkl not found — predictions will use unscaled data")
+    return _scaler
 
 FEATURE_COLS = [
     'Air temperature [K]',
@@ -503,6 +516,11 @@ def predict():
 
         X = data[FEATURE_COLS].values
 
+        # ── Apply scaler if available ──
+        scaler = get_scaler()
+        if scaler is not None:
+            X = scaler.transform(X)
+
         # ── Build sequences ──
         sequences, indices = [], []
         for i in range(len(X) - SEQUENCE_LENGTH + 1):
@@ -635,7 +653,10 @@ def predict_single():
         return jsonify({"success": False, "message": "All 5 numeric fields are required."}), 400
 
     # LSTM expects (batch, SEQUENCE_LENGTH, 5). Repeat the single row to fill the sequence.
-    row   = [air_temp, process_temp, rotational_speed, torque, tool_wear]
+    row = [air_temp, process_temp, rotational_speed, torque, tool_wear]
+    scaler = get_scaler()
+    if scaler is not None:
+        row = scaler.transform([row])[0].tolist()
     X     = np.array([row] * SEQUENCE_LENGTH, dtype=np.float32)   # (30, 5)
     X_seq = np.expand_dims(X, axis=0)                              # (1, 30, 5)
 
