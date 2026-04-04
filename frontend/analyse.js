@@ -11,7 +11,7 @@ let predictionData = [];
 let uploadedBlob = null;
 
 // ── On load: run predictions ──
-window.addEventListener('DOMContentLoaded', async () => {
+window.addEventListener('DOMContentLoaded', async() => {
     const csvRaw = sessionStorage.getItem('csv_raw');
     const filename = sessionStorage.getItem('uploaded_filename') || 'data.csv';
 
@@ -24,13 +24,14 @@ window.addEventListener('DOMContentLoaded', async () => {
     uploadedBlob = new Blob([csvRaw], { type: 'text/csv' });
 
     // Show detailed loading progress
-    const loadingMsg = document.querySelector('#loading-state p');
+    const loadingMsg = document.getElementById('loading-step-msg');
     const steps = [
-        'Uploading your data...',
-        'Loading AI model (this may take a moment)...',
-        'Running predictions on all rows...',
-        'Processing results...',
-        'Almost done...'
+        'Uploading your data to the server...',
+        'Loading AI model — first load may take 1-2 minutes...',
+        'Running predictions on all rows (please be patient)...',
+        'Still processing... large datasets take time...',
+        'Crunching numbers, almost there...',
+        'Finalising results...'
     ];
     let stepIdx = 0;
     if (loadingMsg) loadingMsg.textContent = steps[0];
@@ -39,7 +40,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         if (stepIdx < steps.length && loadingMsg) {
             loadingMsg.textContent = steps[stepIdx];
         }
-    }, 8000);
+    }, 15000);
 
     try {
         const result = await fetchWithRetry(uploadedBlob, filename);
@@ -62,13 +63,13 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-// ── Fetch with retry (up to 2 attempts, 5 min timeout each) ──
-async function fetchWithRetry(blob, filename, maxAttempts = 2) {
+// ── Fetch with retry (up to 3 attempts, 15 min timeout each) ──
+async function fetchWithRetry(blob, filename, maxAttempts = 3) {
     let lastError;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         const controller = new AbortController();
-        // 5-minute timeout — large LSTM datasets can take a while
-        const timeoutId = setTimeout(() => controller.abort(), 5 * 60 * 1000);
+        // 15-minute timeout — large LSTM datasets + cold model load can be slow
+        const timeoutId = setTimeout(() => controller.abort(), 15 * 60 * 1000);
 
         try {
             const formData = new FormData();
@@ -81,7 +82,13 @@ async function fetchWithRetry(blob, filename, maxAttempts = 2) {
             });
             clearTimeout(timeoutId);
 
-            const result = await response.json();
+            // Try to parse JSON — if it fails, the server returned something unexpected
+            let result;
+            try {
+                result = await response.json();
+            } catch (jsonErr) {
+                throw new Error('Server returned an unexpected response. Please try again.');
+            }
 
             if (!response.ok || !result.success) {
                 throw new Error(result.message || 'Prediction failed on server');
@@ -94,14 +101,20 @@ async function fetchWithRetry(blob, filename, maxAttempts = 2) {
             lastError = err;
 
             if (err.name === 'AbortError') {
-                lastError = new Error('The prediction timed out. The server may be busy or the dataset is very large. Please try again.');
+                lastError = new Error('The prediction timed out after 15 minutes. Please try with a smaller dataset or contact support.');
+            }
+
+            // Don't retry on definitive server errors (4xx)
+            if (err.message && err.message.includes('Missing required columns')) {
+                break;
             }
 
             if (attempt < maxAttempts) {
-                // Wait 3 seconds before retry
-                const loadingMsg = document.querySelector('#loading-state p');
-                if (loadingMsg) loadingMsg.textContent = `Retrying... (attempt ${attempt + 1} of ${maxAttempts})`;
-                await new Promise(resolve => setTimeout(resolve, 3000));
+                const waitSec = attempt * 5; // 5s, 10s between retries
+                const loadingMsg = document.getElementById('loading-step-msg');
+                if (loadingMsg) loadingMsg.textContent = `Connection issue — retrying in ${waitSec}s... (attempt ${attempt + 1} of ${maxAttempts})`;
+                await new Promise(resolve => setTimeout(resolve, waitSec * 1000));
+                if (loadingMsg) loadingMsg.textContent = `Retrying prediction (attempt ${attempt + 1} of ${maxAttempts})...`;
             }
         }
     }
@@ -185,7 +198,8 @@ function renderFailureTimeChart() {
             }]
         },
         options: {
-            responsive: true, maintainAspectRatio: false,
+            responsive: true,
+            maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: {
                 x: { title: { display: true, text: 'Row Index' }, grid: { color: 'rgba(0,0,0,0.04)' } },
@@ -225,7 +239,8 @@ function renderMotorRiskChart() {
             }]
         },
         options: {
-            responsive: true, maintainAspectRatio: false,
+            responsive: true,
+            maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: {
                 x: { grid: { display: false } },
@@ -253,7 +268,8 @@ function renderRiskDistChart(high, medium, low) {
             }]
         },
         options: {
-            responsive: true, maintainAspectRatio: false,
+            responsive: true,
+            maintainAspectRatio: false,
             plugins: {
                 legend: { position: 'bottom', labels: { padding: 16, font: { size: 12 } } }
             },
@@ -278,7 +294,8 @@ function renderTempFailureChart() {
             }]
         },
         options: {
-            responsive: true, maintainAspectRatio: false,
+            responsive: true,
+            maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: {
                 x: { title: { display: true, text: 'Air Temperature (K)' }, grid: { color: 'rgba(0,0,0,0.04)' } },
@@ -308,7 +325,8 @@ function renderTorqueSpeedChart() {
             }]
         },
         options: {
-            responsive: true, maintainAspectRatio: false,
+            responsive: true,
+            maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: {
                 x: { title: { display: true, text: 'Rotational Speed (rpm)' }, grid: { color: 'rgba(0,0,0,0.04)' } },
@@ -352,7 +370,8 @@ function renderToolWearChart() {
             }]
         },
         options: {
-            responsive: true, maintainAspectRatio: false,
+            responsive: true,
+            maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: {
                 x: { title: { display: true, text: 'Tool Wear (min)' }, grid: { display: false } },
@@ -416,20 +435,23 @@ function showError(title, msg) {
 function showLogoutPopup() {
     document.getElementById('logout-overlay').classList.add('show');
 }
+
 function hideLogoutPopup() {
     document.getElementById('logout-overlay').classList.remove('show');
 }
+
 function performLogout() {
     localStorage.removeItem('user_email');
     localStorage.removeItem('role');
     window.location.href = 'login.html';
 }
-document.getElementById('logout-overlay').addEventListener('click', function (e) {
+document.getElementById('logout-overlay').addEventListener('click', function(e) {
     if (e.target === this) hideLogoutPopup();
 });
 
 // ── Toast ──
 let toastTimer;
+
 function showToast(msg, isError = false) {
     const toast = document.getElementById('toast');
     document.getElementById('toast-msg').textContent = msg;

@@ -19,6 +19,9 @@ load_dotenv(override=True)
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 CORS(app)
 
+# Allow large CSV uploads (up to 100 MB)
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Lazy-load LSTM model once
@@ -529,7 +532,10 @@ def predict():
             'failure_probability': preds,
         })
 
-        result_df = result_df.sort_values(['timestamp', 'motor_id']).reset_index(drop=True)
+        try:
+            result_df = result_df.sort_values(['timestamp', 'motor_id']).reset_index(drop=True)
+        except Exception:
+            result_df = result_df.reset_index(drop=True)
 
         download = request.args.get('download', 'false').lower() == 'true'
         if download:
@@ -659,4 +665,5 @@ def predict_single():
 if __name__ == '__main__':
     debug_mode = os.getenv('FLASK_DEBUG', 'True') == 'True'
     port = int(os.getenv('FLASK_PORT', 5000))
-    app.run(debug=debug_mode, port=port)
+    # threaded=True lets model loading & prediction run without blocking other requests
+    app.run(debug=debug_mode, port=port, threaded=True)
