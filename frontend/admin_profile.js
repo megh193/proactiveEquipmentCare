@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const userEmail = localStorage.getItem('user_email');
 
     if (userEmail) {
-        fetch(`http://127.0.0.1:5000/api/profile?email=${encodeURIComponent(userEmail)}`)
+        fetch(`${CONFIG.API_BASE_URL}/api/profile?email=${encodeURIComponent(userEmail)}`)
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     showProfileToast('Profile photo updated! Changes are reflected everywhere.');
 
                     // Save to Backend
-                    fetch('http://127.0.0.1:5000/api/profile/avatar', {
+                    fetch(`${CONFIG.API_BASE_URL}/api/profile/avatar`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -147,7 +147,7 @@ function hideChangePasswordModal() {
 function requestPasswordOtp() {
     const email = localStorage.getItem('user_email');
     if (!email) return alert('No user session found.');
-    fetch('http://127.0.0.1:5000/api/change-password/request-otp', {
+    fetch(`${CONFIG.API_BASE_URL}/api/change-password/request-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
@@ -176,7 +176,7 @@ function submitPasswordChange() {
     if (newPw !== confirmPw) { errEl.textContent = 'Passwords do not match.'; return; }
     if (newPw.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; return; }
 
-    fetch('http://127.0.0.1:5000/api/change-password/verify', {
+    fetch(`${CONFIG.API_BASE_URL}/api/change-password/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp, new_password: newPw })

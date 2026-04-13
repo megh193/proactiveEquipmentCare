@@ -75,7 +75,7 @@ async function fetchWithRetry(blob, filename, maxAttempts = 3) {
             const formData = new FormData();
             formData.append('file', blob, filename);
 
-            const response = await fetch('http://127.0.0.1:5000/predict', {
+            const response = await fetch(`${CONFIG.API_BASE_URL}/predict`, {
                 method: 'POST',
                 body: formData,
                 signal: controller.signal
@@ -397,7 +397,7 @@ async function convertAndDownload() {
         const formData = new FormData();
         formData.append('file', uploadedBlob, filename);
 
-        const response = await fetch('http://127.0.0.1:5000/predict?download=true', {
+        const response = await fetch(`${CONFIG.API_BASE_URL}/predict?download=true`, {
             method: 'POST',
             body: formData
         });

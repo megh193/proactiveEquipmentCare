@@ -63,7 +63,7 @@ function runSinglePrediction() {
     btn.disabled = true;
     btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Analyzing...';
 
-    fetch('http://127.0.0.1:5000/api/predict-single', {
+    fetch(`${CONFIG.API_BASE_URL}/api/predict-single`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -169,7 +169,7 @@ function resetSinglePrediction() {
 function logSinglePredictionAudit() {
     var email = localStorage.getItem('user_email');
     if (!email) return;
-    fetch('http://127.0.0.1:5000/api/audit-logs', {
+    fetch(`${CONFIG.API_BASE_URL}/api/audit-logs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_email: email, csv_name: 'single_prediction', row_count: 1 })

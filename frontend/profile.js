@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Fetch name from /api/profile
     if (userEmail) {
-        fetch(`http://127.0.0.1:5000/api/profile?email=${encodeURIComponent(userEmail)}`)
+        fetch(`${CONFIG.API_BASE_URL}/api/profile?email=${encodeURIComponent(userEmail)}`)
             .then(res => res.json())
             .then(data => {
                 if (data.success && data.name) {
@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (userEmail) {
         // Fetch User Details from Backend (IP + last login time from Supabase logs)
-        fetch(`http://127.0.0.1:5000/user-details?email=${encodeURIComponent(userEmail)}`)
+        fetch(`${CONFIG.API_BASE_URL}/user-details?email=${encodeURIComponent(userEmail)}`)
             .then(response => response.json())
             .then(data => {
                 if (data.success && data.ip_address) {
@@ -140,7 +140,7 @@ function hideChangePasswordModal() {
 function requestPasswordOtp() {
     const email = localStorage.getItem('user_email');
     if (!email) return alert('No user session found.');
-    fetch('http://127.0.0.1:5000/api/change-password/request-otp', {
+    fetch(`${CONFIG.API_BASE_URL}/api/change-password/request-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
@@ -169,7 +169,7 @@ function submitPasswordChange() {
     if (newPw !== confirmPw) { errEl.textContent = 'Passwords do not match.'; return; }
     if (newPw.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; return; }
 
-    fetch('http://127.0.0.1:5000/api/change-password/verify', {
+    fetch(`${CONFIG.API_BASE_URL}/api/change-password/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp, new_password: newPw })
