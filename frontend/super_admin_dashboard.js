@@ -51,7 +51,7 @@ var auditLogsData = [];
 function loadAuditLogs() {
     var tbody = document.getElementById('audit-tbody');
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:#64748B;">Loading...</td></tr>';
-    fetch('http://127.0.0.1:5000/api/audit-logs')
+    fetch(`${CONFIG.API_BASE_URL}/api/audit-logs`)
         .then(function (r) { return r.json(); })
         .then(function (data) {
             auditLogsData = data.logs || [];
@@ -95,7 +95,7 @@ var loginLogsData = [];
 function loadLoginLogs() {
     var tbody = document.getElementById('login-logs-tbody');
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:#64748B;">Loading...</td></tr>';
-    fetch('http://127.0.0.1:5000/api/login-logs')
+    fetch(`${CONFIG.API_BASE_URL}/api/login-logs`)
         .then(function (r) { return r.json(); })
         .then(function (data) {
             loginLogsData = data.logs || [];

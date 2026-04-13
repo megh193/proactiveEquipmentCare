@@ -35,7 +35,7 @@ document.getElementById('loginForm').addEventListener('submit', async function (
         submitBtn.querySelector('.button__text').innerText = 'Authenticating...';
 
         try {
-            const response = await fetch('http://127.0.0.1:5000/login', {
+            const response = await fetch(`${CONFIG.API_BASE_URL}/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -95,7 +95,7 @@ document.getElementById('verifyOtpBtn').addEventListener('click', async function
     verifyBtn.innerText = "Verifying...";
 
     try {
-        const response = await fetch('http://127.0.0.1:5000/verify-otp', {
+        const response = await fetch(`${CONFIG.API_BASE_URL}/verify-otp`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email: email, otp: otp })
@@ -151,7 +151,7 @@ async function logout() {
     const email = localStorage.getItem('user_email');
     if (email) {
         try {
-            await fetch('http://127.0.0.1:5000/api/logout', {
+            await fetch(`${CONFIG.API_BASE_URL}/api/logout`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: email })
@@ -168,7 +168,7 @@ async function logout() {
 window.addEventListener('beforeunload', function (e) {
     const email = localStorage.getItem('user_email');
     if (email) {
-        navigator.sendBeacon('http://127.0.0.1:5000/api/logout', JSON.stringify({ email: email }));
+        navigator.sendBeacon(`${CONFIG.API_BASE_URL}/api/logout`, JSON.stringify({ email: email }));
     }
 });
 

@@ -207,7 +207,7 @@ function resetUpload() {
 function logPredictionAudit(csvName, rowCount) {
     var email = localStorage.getItem('user_email');
     if (!email) return;
-    fetch('http://127.0.0.1:5000/api/audit-logs', {
+    fetch(`${CONFIG.API_BASE_URL}/api/audit-logs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_email: email, csv_name: csvName, row_count: rowCount })
@@ -244,7 +244,7 @@ function convertAndDownload() {
     var formData = new FormData();
     formData.append('file', uploadedFile);
 
-    fetch('http://127.0.0.1:5000/predict?download=true', {
+    fetch(`${CONFIG.API_BASE_URL}/predict?download=true`, {
         method: 'POST',
         body: formData
     })
