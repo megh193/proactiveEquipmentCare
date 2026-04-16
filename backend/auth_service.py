@@ -30,6 +30,9 @@ def send_otp_email(receiver_email, otp, agenda="login"):
     if agenda == "change_password":
         subject = "Your Password Change Verification Code"
         body = f"Your verification code to change your password is: {otp}\n\nThis code will expire in 2 minutes.\nIf you did not request this, please ignore this email."
+    elif agenda == "signup":
+        subject = "Verify Your Email — Proactive Equipment Care"
+        body = f"Your account verification code is: {otp}\n\nThis code will expire in 2 minutes.\nIf you did not request this, please ignore this email."
     else:
         subject = "Your Login Verification Code"
         body = f"Your login verification code is: {otp}\n\nThis code will expire in 2 minutes."

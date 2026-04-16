@@ -1,3 +1,96 @@
+let currentMode = 'signin'; // 'signin' | 'signup'
+
+// ── Tab switching ──────────────────────────────────────────
+document.getElementById('signinTab').addEventListener('click', () => switchTab('signin'));
+document.getElementById('signupTab').addEventListener('click', () => switchTab('signup'));
+
+function switchTab(mode) {
+    currentMode = mode;
+    const isSignup = mode === 'signup';
+    document.getElementById('signinTab').classList.toggle('active', !isSignup);
+    document.getElementById('signupTab').classList.toggle('active', isSignup);
+    document.getElementById('signinHeader').style.display  = isSignup ? 'none' : '';
+    document.getElementById('signupHeader').style.display  = isSignup ? '' : 'none';
+    document.getElementById('loginForm').style.display     = isSignup ? 'none' : '';
+    document.getElementById('signupForm').style.display    = isSignup ? '' : 'none';
+}
+
+// ── Sign-up form ───────────────────────────────────────────
+document.getElementById('signupForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const nameEl    = document.getElementById('signupName');
+    const emailEl   = document.getElementById('signupEmail');
+    const passEl    = document.getElementById('signupPassword');
+    const confirmEl = document.getElementById('signupConfirm');
+    const nameVal    = nameEl.value.trim();
+    const emailVal   = emailEl.value.trim();
+    const passVal    = passEl.value;
+    const confirmVal = confirmEl.value;
+    const signupBtn  = document.getElementById('signupBtn');
+
+    let isValid = true;
+
+    [nameEl, emailEl, passEl, confirmEl].forEach(el => el.classList.remove('input-error'));
+    ['signupNameError','signupEmailError','signupPasswordError','signupConfirmError']
+        .forEach(id => document.getElementById(id).classList.remove('visible'));
+
+    if (!nameVal) {
+        showError(nameEl, document.getElementById('signupNameError'), 'Name is required');
+        isValid = false;
+    }
+    if (!emailVal) {
+        showError(emailEl, document.getElementById('signupEmailError'), 'Email is required');
+        isValid = false;
+    } else if (!validateEmail(emailVal)) {
+        showError(emailEl, document.getElementById('signupEmailError'), 'Please enter a valid email address');
+        isValid = false;
+    }
+    if (!passVal) {
+        showError(passEl, document.getElementById('signupPasswordError'), 'Password is required');
+        isValid = false;
+    } else if (passVal.length < 8) {
+        showError(passEl, document.getElementById('signupPasswordError'), 'Password must be at least 8 characters');
+        isValid = false;
+    }
+    if (!confirmVal) {
+        showError(confirmEl, document.getElementById('signupConfirmError'), 'Please confirm your password');
+        isValid = false;
+    } else if (passVal !== confirmVal) {
+        showError(confirmEl, document.getElementById('signupConfirmError'), 'Passwords do not match');
+        isValid = false;
+    }
+
+    if (!isValid) return;
+
+    signupBtn.disabled = true;
+    signupBtn.querySelector('.button__text').innerText = 'Creating Account...';
+    document.getElementById('signupSpinner').style.display = 'inline-flex';
+    document.getElementById('signupBtnIcon').style.display  = 'none';
+
+    try {
+        const response = await fetch(`${CONFIG.API_BASE_URL}/api/signup`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: nameVal, email: emailVal, password: passVal })
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+            showSuccessPopup('Your account has been created successfully. Please sign in.');
+        } else {
+            showErrorPopup(data.message || 'Sign up failed. Please try again.');
+        }
+    } catch (err) {
+        showErrorPopup('Network error. Please try again.');
+    } finally {
+        signupBtn.disabled = false;
+        signupBtn.querySelector('.button__text').innerText = 'Create Account';
+        document.getElementById('signupSpinner').style.display = 'none';
+        document.getElementById('signupBtnIcon').style.display  = '';
+    }
+});
+
 document.getElementById('loginForm').addEventListener('submit', async function (e) {
     e.preventDefault();
 
@@ -80,7 +173,6 @@ document.getElementById('loginForm').addEventListener('submit', async function (
 document.getElementById('verifyOtpBtn').addEventListener('click', async function () {
     const otpInput = document.getElementById('otpInput');
     const otp = otpInput.value.trim();
-    const email = document.getElementById('email').value.trim();
     const otpError = document.getElementById('otpError');
     const verifyBtn = document.getElementById('verifyOtpBtn');
     const originalBtnText = verifyBtn.innerHTML;
@@ -95,24 +187,21 @@ document.getElementById('verifyOtpBtn').addEventListener('click', async function
     verifyBtn.innerText = "Verifying...";
 
     try {
+        const email = document.getElementById('email').value.trim();
         const response = await fetch(`${CONFIG.API_BASE_URL}/verify-otp`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email: email, otp: otp })
         });
-
         const data = await response.json();
-
         if (response.ok) {
             loginSuccess(data.email || email, data.role);
         } else {
-            // Updated to show Popup
             showErrorPopup(data.message || "Incorrect OTP");
             verifyBtn.disabled = false;
             verifyBtn.innerHTML = originalBtnText;
         }
     } catch (error) {
-        // Updated to show Popup
         showErrorPopup("Network Error. Please try again.");
         verifyBtn.disabled = false;
         verifyBtn.innerHTML = originalBtnText;
@@ -214,4 +303,20 @@ window.addEventListener('click', function (event) {
     if (event.target == errorModal) {
         errorModal.style.display = 'none';
     }
+    const successModal = document.getElementById('successModal');
+    if (event.target == successModal) {
+        successModal.style.display = 'none';
+        switchTab('signin');
+    }
+});
+
+// Success popup
+function showSuccessPopup(message) {
+    document.getElementById('successMessageText').innerText = message;
+    document.getElementById('successModal').style.display = 'flex';
+}
+
+document.getElementById('closeSuccessBtn').addEventListener('click', function () {
+    document.getElementById('successModal').style.display = 'none';
+    switchTab('signin');
 });

@@ -119,6 +119,80 @@ def verify_otp_route():
         # log_login(email, ip_address, status="Failed OTP") 
         return jsonify({"success": False, "message": message}), 401
 
+@app.route('/api/signup', methods=['POST'])
+def signup():
+    data     = request.json
+    name     = (data.get('name') or '').strip()
+    email    = (data.get('email') or '').strip().lower()
+    password = data.get('password') or ''
+
+    if not name or not email or not password:
+        return jsonify({"success": False, "message": "Name, email, and password are required"}), 400
+
+    if len(password) < 8:
+        return jsonify({"success": False, "message": "Password must be at least 8 characters"}), 400
+
+    user_table = os.getenv("SUPABASE_USER_TABLE_NAME", "users_database")
+
+    # Check if email already exists in users_database
+    try:
+        existing = supabase.table(user_table).select("email").eq("email", email).execute()
+        if existing.data:
+            return jsonify({"success": False, "message": "An account with this email already exists"}), 409
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+    # Create user in Supabase Auth
+    import requests as _req
+    supa_url = os.getenv("SUPABASE_URL")
+    svc_key  = os.getenv("SUPABASE_SERVICE_KEY")
+    auth_headers = {
+        "apikey":        svc_key,
+        "Authorization": f"Bearer {svc_key}",
+        "Content-Type":  "application/json"
+    }
+
+    create_resp = _req.post(
+        f"{supa_url}/auth/v1/admin/users",
+        headers=auth_headers,
+        json={"email": email, "password": password, "email_confirm": True}
+    )
+
+    auth_uid = None
+    if create_resp.status_code == 200:
+        auth_uid = create_resp.json().get("id")
+        print(f"[Signup] Created Supabase Auth user: {email} → uid={auth_uid}")
+    else:
+        resp_json = create_resp.json()
+        err_msg   = resp_json.get("msg", resp_json.get("message", "Failed to create account"))
+        print(f"[Signup] Supabase Auth error ({create_resp.status_code}): {err_msg}")
+        return jsonify({"success": False, "message": f"Account creation failed: {err_msg}"}), 500
+
+    # Insert into users_database with bcrypt-hashed password
+    try:
+        hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+        response = supabase.table(user_table).insert({
+            "name":     name,
+            "email":    email,
+            "password": hashed_pw,
+            "Role":     "admin"
+        }).execute()
+
+        user_data = response.data[0] if response.data else {}
+        if "Role" in user_data:
+            user_data["role"] = user_data.pop("Role")
+
+        print(f"[Signup] Inserted into {user_table}: {user_data}")
+        return jsonify({"success": True, "message": "Account created successfully", "user": user_data})
+
+    except Exception as e:
+        # Roll back Supabase Auth user so we don't leave orphans
+        if auth_uid:
+            _req.delete(f"{supa_url}/auth/v1/admin/users/{auth_uid}", headers=auth_headers)
+            print(f"[Signup] Rolled back Auth user {auth_uid} due to DB error")
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
 @app.route('/api/logout', methods=['POST'])
 def logout_route():
     if request.is_json:

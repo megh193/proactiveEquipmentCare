@@ -255,7 +255,7 @@ function renderRiskDistChart(high, medium, low) {
     new Chart(document.getElementById('chart-risk-dist'), {
         type: 'doughnut',
         data: {
-            labels: ['High Risk (≥70%)', 'Medium Risk (30-70%)', 'Low Risk (<30%)'],
+            labels: ['High Risk (≥70%)', 'Medium Risk (30–70%)', 'Low Risk (<30%)'],
             datasets: [{
                 data: [high, medium, low],
                 backgroundColor: [

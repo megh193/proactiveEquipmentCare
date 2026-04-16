@@ -10,8 +10,9 @@ __pycache__/
 # Jupyter checkpoints
 .ipynb_checkpoints/
 
-# Trained model (large binary — regenerate via notebooks)
+# Trained model & scaler (large binaries — regenerate via notebooks)
 models/*.h5
+models/*.pkl
 
 # Raw & processed data (large files — downloaded/generated via scripts)
 data/raw/
@@ -24,6 +25,12 @@ dashboard/*.csv
 venv/
 .venv/
 env/
+
+# User profile data (runtime generated)
+data/profiles.json
+
+# Numpy sequence arrays (regenerate via notebooks)
+data/processed/*.npy
 
 # OS noise
 .DS_Store
