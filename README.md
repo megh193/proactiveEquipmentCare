@@ -13,6 +13,7 @@ A predictive maintenance system for industrial motor equipment. It uses a stacke
 | Auth | Supabase Auth + OTP via Gmail SMTP |
 | Database | Supabase (PostgreSQL) |
 | Frontend | HTML, CSS, Vanilla JavaScript, Chart.js |
+| Deployment | Vercel (frontend), Render (backend) |
 | Data | pandas, NumPy, scikit-learn |
 
 ---
@@ -40,6 +41,8 @@ AI Codebase/
 │   ├── super_admin_profile.html/js/css # Super admin profile page
 │   ├── dashboard_core.js               # Shared upload, preview, predict & audit logic
 │   ├── dark_mode.js/css                # Dark mode toggle (shared)
+│   ├── config.js                       # API base URL config (swap for deployment)
+│   ├── vercel.json                     # Vercel frontend deployment config
 │   └── default_avatar.svg              # Fallback profile avatar
 ├── notebooks/
 │   ├── 01_data_loading.ipynb       # Load & merge raw CSVs
@@ -52,7 +55,8 @@ AI Codebase/
 │   ├── processed/              # Normalised CSV + .npy sequence arrays
 │   └── profiles.json           # User avatar data (local store)
 ├── models/
-│   └── motor_lstm_model.h5     # Trained LSTM model
+│   ├── motor_lstm_model.h5     # Trained LSTM model
+│   └── scaler.pkl              # Fitted StandardScaler (saved during preprocessing)
 ├── dashboard/
 │   └── motor_failure_predictions.csv  # Batch prediction output
 ├── docs/                       # Project documentation & reports
@@ -103,12 +107,15 @@ Optimizer: Adam | Loss: Binary Crossentropy
 
 ## User Roles & Access
 
-| Feature | Admin | Super Admin |
+| Feature | User | Admin |
 |---|:---:|:---:|
 | Upload CSV & view predictions | ✅ | ✅ |
+| Single motor prediction (live sensor input) | ✅ | ✅ |
 | Analyse charts | ✅ | ✅ |
 | Download predictions CSV | ✅ | ✅ |
+| Dark mode toggle | ✅ | ✅ |
 | Change own password (OTP-verified) | ✅ | ✅ |
+| Update profile avatar | ✅ | ✅ |
 | Manage users (add/edit/delete) | ❌ | ✅ |
 | View all registered users | ❌ | ✅ |
 | View prediction audit logs | ❌ | ✅ |
@@ -125,6 +132,7 @@ Optimizer: Adam | Loss: Binary Crossentropy
 | `POST` | `/verify-otp` | Step 2 auth — verifies OTP, returns role |
 | `POST` | `/api/logout` | Logout |
 | `POST` | `/predict` | Run LSTM prediction on uploaded CSV |
+| `POST` | `/api/signup` | Self-register a new admin account |
 | `GET` | `/api/users` | List all users (super admin) |
 | `POST` | `/api/users` | Create new user (super admin) |
 | `PUT` | `/api/users/<id>` | Update user (super admin) |
@@ -288,6 +296,11 @@ The server starts at `http://localhost:5000`. Open `http://localhost:5000` in yo
 3. Click "Analyse" to view interactive charts
 4. Click "Download Predictions" to export results as CSV
 
+**Via single motor prediction (real-time):**
+1. On the Dashboard, switch to the **Single Prediction** tab
+2. Enter live sensor readings for all 5 fields
+3. Click "Predict Failure" to instantly see the failure probability gauge and risk level
+
 **Via batch script (offline):**
 ```bash
 python backend/predict_and_export.py
@@ -313,3 +326,40 @@ Optional columns used for output enrichment: `Timestamp`, `Product ID`
 Minimum rows required: **30** (one full sequence)
 
 > The `/predict` endpoint performs flexible column name matching — common variants such as `air_temperature`, `AirTemperature`, and `Rotational speed` are automatically recognised and mapped to the standard names.
+
+---
+
+## Risk Thresholds
+
+The LSTM model outputs a failure probability (0–100%). The system classifies each prediction into one of three risk tiers:
+
+| Risk Level | Threshold | Action |
+|---|---|---|
+| 🔴 High | ≥ 70% | Immediate maintenance required |
+| 🟡 Medium | 30–70% | Monitor closely, plan preventive maintenance |
+| 🟢 Low | < 30% | Operating normally |
+
+These thresholds apply across the dashboard metrics, analyse charts, and single motor prediction gauge.
+
+---
+
+## Dark Mode
+
+All pages support a persistent dark mode toggle. The preference is saved to `localStorage` and automatically applied on every page load. Chart colours update dynamically when toggled.
+
+---
+
+## Deployment
+
+| Layer | Platform |
+|---|---|
+| Frontend | [Vercel](https://vercel.com) — static hosting via `vercel.json` |
+| Backend | [Render](https://render.com) — Python/Flask web service |
+
+To point the frontend at your deployed backend, update `frontend/config.js`:
+
+```js
+const CONFIG = {
+    API_BASE_URL: 'https://your-backend.onrender.com'
+};
+```
