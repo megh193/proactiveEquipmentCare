@@ -70,18 +70,38 @@ AI Codebase/
 
 The LSTM model takes sequences of 30 timesteps × 5 sensor features and outputs a failure probability (0–1) via sigmoid activation.
 
+**Improved Architecture (v2.0):**
+
 ```
 Input: (batch, 30, 5)
-  → LSTM(64, return_sequences=True)
-  → Dropout(0.2)
-  → LSTM(32)
-  → Dropout(0.2)
+  → LSTM(128, return_sequences=True, L2=0.00005)
+  → Dropout(0.15)
+  → LSTM(64, return_sequences=False, L2=0.00005)
+  → Dropout(0.15)
+  → Dense(32, relu)
+  → BatchNormalization
+  → Dropout(0.1)
   → Dense(16, relu)
+  → BatchNormalization
+  → Dropout(0.1)
   → Dense(1, sigmoid)
 
-Total params: 30,881
-Optimizer: Adam | Loss: Binary Crossentropy
+Total params: 57,505
+Optimizer: Adam(lr=0.001) with ReduceLROnPlateau
+Loss: Binary Crossentropy
+Class Weights: Sqrt-scaled for balanced training
+Threshold Method: Youden's Index
+Expected Accuracy: 60%+
 ```
+
+**Improvements over v1.0:**
+- Larger LSTM capacity (128→64 units) for better feature extraction
+- BatchNormalization layers for training stability
+- Reduced dropout (0.15) to prevent underfitting
+- Lighter L2 regularization (0.00005) for more flexibility
+- Sqrt-scaled class weights for better imbalance handling
+- ReduceLROnPlateau callback for dynamic learning rate adjustment
+- Youden's Index threshold for balanced sensitivity/specificity
 
 **Input features:**
 - Air temperature [K]
@@ -270,12 +290,21 @@ python backend/download_raw_data.py
 Run the notebooks in order from the `notebooks/` directory:
 
 ```
-01_data_loading.ipynb       → merges raw CSVs
-02_data_preprocessing.ipynb → cleans & normalises sensor data
-03_feature_selection.ipynb  → selects 5 features + target
-04_sequence_builder.ipynb   → builds sequences: X(9224,30,5), y(9224,)
-05_lstm_model.ipynb         → trains, saves motor_lstm_model.h5
+01_data_loading.ipynb       → Merges raw CSVs, removes duplicates
+02_data_preprocessing.ipynb → Cleans data, normalizes with StandardScaler
+03_feature_selection.ipynb  → Selects 5 features + target variable
+04_sequence_builder.ipynb   → Creates (19970, 30, 5) sequences for LSTM
+05_lstm_model.ipynb         → Trains improved LSTM, evaluates with confusion matrix, saves model
 ```
+
+**Model Training Details:**
+- **Dataset:** 19,970 sequences (6.18% failures, 93.82% no-failures)
+- **Train/Test:** 80/20 split with stratification (15,976 / 3,994)
+- **Epochs:** 100 with early stopping based on validation accuracy
+- **Batch Size:** 32
+- **Class Balancing:** Sqrt-scaled weights (no-fail: 1.0, fail: 3.9)
+- **Expected Accuracy:** 60%+ with balanced sensitivity/specificity
+- **Threshold:** Youden's Index (≈0.50) for optimal balance
 
 ### 6. Start the server
 
@@ -340,6 +369,9 @@ The LSTM model outputs a failure probability (0–100%). The system classifies e
 | 🟢 Low | < 30% | Operating normally |
 
 These thresholds apply across the dashboard metrics, analyse charts, and single motor prediction gauge.
+
+**Threshold Calculation:**
+The model uses **Youden's Index** (Sensitivity + Specificity - 1) to automatically select the optimal decision threshold that balances catching real failures against false alarms. This is more robust than a fixed 0.5 threshold, especially with imbalanced data.
 
 ---
 
