@@ -48,7 +48,7 @@ AI Codebase/
 │   ├── 01_data_loading.ipynb       # Load & merge raw CSVs
 │   ├── 02_data_preprocessing.ipynb # Clean & StandardScaler normalisation
 │   ├── 03_feature_selection.ipynb  # Select 5 sensor features + target
-│   ├── 04_sequence_builder.ipynb   # Build (9224, 30, 5) LSTM sequences
+│   ├── 04_sequence_builder.ipynb   # Build (19970, 30, 5) LSTM sequences
 │   └── 05_lstm_model.ipynb         # Train, evaluate & save LSTM model
 ├── data/
 │   ├── raw/                    # Raw sensor CSVs (downloaded via script)

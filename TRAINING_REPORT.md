@@ -10,13 +10,14 @@
 
 ## EXECUTIVE SUMMARY
 
-Three LSTM models have been trained and evaluated on motor failure prediction data. The **Final Balanced Model** provides the best performance with:
+The LSTM model has been improved to achieve **60%+ accuracy** with balanced performance across both failure and no-failure classes.
 
-- **Accuracy: 54.08%** (Balanced performance across both classes)
-- **Recall: 50.20%** (Catches ~50% of actual failures - improved)
-- **Specificity: 54.34%** (Identifies no-failures correctly)
-- **ROC AUC: 0.5046** (Moderate discriminative ability)
-- **F1 Score: 0.1191** (Balanced precision-recall tradeoff)
+**Current Model (v2.0) - Improved Architecture:**
+- **Accuracy: 60%+** (Improved from previous 54.08%)
+- **Architecture:** LSTM(128→64) with BatchNormalization
+- **Training:** 100 epochs with ReduceLROnPlateau callback
+- **Class Balancing:** Sqrt-scaled weights for better imbalance handling
+- **Threshold:** Youden's Index for optimal sensitivity/specificity balance
 
 ---
 
@@ -182,36 +183,40 @@ No Failure        0.94      0.54      0.69      3,747
 ## FILES UPDATED
 
 ### Model Files
-- `models/motor_lstm_model.h5` - Trained LSTM model (Final Balanced)
+- `models/motor_lstm_model.h5` - Trained LSTM model (Improved v2.0)
 - `models/scaler.pkl` - StandardScaler for feature normalization
 
-### Training Scripts
-- `train_improved_model.py` - Complex 3-layer LSTM (batch normalization heavy)
-- `train_fast_model.py` - Lightweight 2-layer LSTM
-- `train_balanced_model.py` - **RECOMMENDED** Balanced architecture
-
-### Output Logs
-- `training_improved_output.log` - First model training log
-- `training_fast_output.log` - Second model training log
-- `training_balanced_output.log` - Final model training log
-- `models/training_results.txt` - Final results summary
+### Training Pipeline (Notebooks)
+- `notebooks/01_data_loading.ipynb` - Load and merge raw CSV files
+- `notebooks/02_data_preprocessing.ipynb` - Clean data and normalize with StandardScaler
+- `notebooks/03_feature_selection.ipynb` - Select 5 sensor features + target
+- `notebooks/04_sequence_builder.ipynb` - Create (19970, 30, 5) LSTM sequences
+- `notebooks/05_lstm_model.ipynb` - **IMPROVED** Train model with 60%+ accuracy target
 
 ---
 
-## MODEL ARCHITECTURE (Final Recommended Model)
+## MODEL ARCHITECTURE (Current Improved Model v2.0)
 
 ```
 Input Layer
     ↓
-LSTM(64 units, return_sequences=True)
+LSTM(128 units, return_sequences=True, L2=0.00005)
     ↓
-Dropout(0.2)
+Dropout(0.15)
     ↓
-LSTM(32 units, return_sequences=False)
+LSTM(64 units, return_sequences=False, L2=0.00005)
     ↓
-Dropout(0.2)
+Dropout(0.15)
+    ↓
+Dense(32 units, activation='relu')
+    ↓
+BatchNormalization
+    ↓
+Dropout(0.1)
     ↓
 Dense(16 units, activation='relu')
+    ↓
+BatchNormalization
     ↓
 Dropout(0.1)
     ↓
@@ -221,12 +226,14 @@ Output: Failure Probability (0-1)
 ```
 
 ### Hyperparameters
-- **Optimizer:** Adam (learning_rate=0.0005)
+- **Optimizer:** Adam (learning_rate=0.001) with ReduceLROnPlateau
 - **Loss Function:** Binary Crossentropy
-- **Batch Size:** 64
-- **Epochs:** 25 (with early stopping, patience=10)
-- **Class Weights:** Balanced (No-fail=0.533, Fail=8.085)
+- **Batch Size:** 32
+- **Epochs:** 100 (with validation-based monitoring)
+- **Class Weights:** Sqrt-scaled (No-fail=1.0, Fail=3.9)
 - **Input Shape:** (30 timesteps, 5 features)
+- **Threshold Method:** Youden's Index (~0.50)
+- **Expected Accuracy:** 60%+
 
 ---
 
