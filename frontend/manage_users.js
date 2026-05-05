@@ -393,10 +393,10 @@ async function performLogout() {
             });
         } catch (_) {}
     }
-    const isDark = localStorage.getItem('darkMode');
-    localStorage.clear();
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_email');
+    localStorage.removeItem('role');
     sessionStorage.clear();
-    if (isDark) localStorage.setItem('darkMode', isDark);
     window.location.href = 'login.html';
 }
 

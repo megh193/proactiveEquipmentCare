@@ -27,10 +27,10 @@ window.fetch = async function () {
     
     // Auto-logout on 401 Unauthorized
     if (response.status === 401 && !resource.includes('/login') && !resource.includes('/verify-otp') && !resource.includes('/api/signup')) {
-        const isDark = localStorage.getItem('darkMode');
-        localStorage.clear();
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user_email');
+        localStorage.removeItem('role');
         sessionStorage.clear();
-        if (isDark) localStorage.setItem('darkMode', isDark);
         window.location.replace('login.html');
     }
     

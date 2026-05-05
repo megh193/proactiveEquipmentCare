@@ -4,7 +4,7 @@ const token = localStorage.getItem('auth_token');
 if (!userEmail || !token) window.location.href = 'login.html';
 
 // ── Profile image ──
-const savedImg = localStorage.getItem('profileImage');
+const savedImg = localStorage.getItem('profileImage_' + userEmail);
 if (savedImg) document.getElementById('nav-profile-img').src = savedImg;
 
 // ── State ──
@@ -52,9 +52,12 @@ window.addEventListener('DOMContentLoaded', async() => {
         // Save stats for dashboard metrics
         const probs = predictionData.map(r => r.failure_probability);
         const criticalCount = probs.filter(p => p >= 70).length;
-        var prevAlerts = parseInt(localStorage.getItem('dash_critical_alerts') || '0');
-        localStorage.setItem('dash_critical_alerts', prevAlerts + criticalCount);
-        localStorage.setItem('dash_total_rows', predictionData.length);
+        var email = localStorage.getItem('user_email') || '';
+        var prevAlerts = parseInt(localStorage.getItem('dash_critical_alerts_' + email) || '0');
+        localStorage.setItem('dash_critical_alerts_' + email, prevAlerts + criticalCount);
+        
+        var prevTotalRows = parseInt(localStorage.getItem('dash_total_rows_' + email) || '0');
+        localStorage.setItem('dash_total_rows_' + email, prevTotalRows + predictionData.length);
 
         renderAll(result.total_rows, filename);
 
@@ -442,10 +445,10 @@ function hideLogoutPopup() {
 }
 
 function performLogout() {
-    const isDark = localStorage.getItem('darkMode');
-    localStorage.clear();
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_email');
+    localStorage.removeItem('role');
     sessionStorage.clear();
-    if (isDark) localStorage.setItem('darkMode', isDark);
     window.location.href = 'login.html';
 }
 document.getElementById('logout-overlay').addEventListener('click', function(e) {

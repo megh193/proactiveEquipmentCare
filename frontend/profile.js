@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const navProfileImg = document.getElementById('nav-profile-img');
 
     // Load existing image from localStorage if available
-    const savedImage = localStorage.getItem('profileImage');
+    const savedImage = localStorage.getItem('profileImage_' + userEmail);
     if (savedImage) {
         if (mainProfileImg) mainProfileImg.src = savedImage;
         if (navProfileImg)  navProfileImg.src  = savedImage;
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const newImgData = e.target.result;
                     if (mainProfileImg) mainProfileImg.src = newImgData;
                     if (navProfileImg)  navProfileImg.src  = newImgData;
-                    localStorage.setItem('profileImage', newImgData);
+                    localStorage.setItem('profileImage_' + userEmail, newImgData);
                 };
 
                 reader.readAsDataURL(file);
@@ -202,10 +202,10 @@ function hideLogoutPopup() {
 }
 
 function performLogout() {
-    const isDark = localStorage.getItem('darkMode');
-    localStorage.clear();
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_email');
+    localStorage.removeItem('role');
     sessionStorage.clear();
-    if (isDark) localStorage.setItem('darkMode', isDark);
     window.location.href = 'login.html';
 }
 

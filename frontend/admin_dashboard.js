@@ -178,17 +178,18 @@ function logSinglePredictionAudit() {
 }
 
 function updateMetricsFromSingle(prob) {
+    var email = localStorage.getItem('user_email') || '';
     // Increment total predictions by 1
-    var prev = parseInt(localStorage.getItem('dash_total_rows') || '0');
-    localStorage.setItem('dash_total_rows', prev + 1);
+    var prev = parseInt(localStorage.getItem('dash_total_rows_' + email) || '0');
+    localStorage.setItem('dash_total_rows_' + email, prev + 1);
 
     // Update critical alerts if high risk
     if (prob >= 70) {
-        var alerts = parseInt(localStorage.getItem('dash_critical_alerts') || '0');
-        localStorage.setItem('dash_critical_alerts', alerts + 1);
+        var alerts = parseInt(localStorage.getItem('dash_critical_alerts_' + email) || '0');
+        localStorage.setItem('dash_critical_alerts_' + email, alerts + 1);
     }
 
     // Update last upload/run date
-    localStorage.setItem('dash_last_upload', new Date().toLocaleString());
+    localStorage.setItem('dash_last_upload_' + email, new Date().toLocaleString());
     updateMetricCards();
 }

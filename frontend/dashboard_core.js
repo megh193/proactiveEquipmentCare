@@ -7,7 +7,7 @@
 
 // ── Profile image ──
 window.addEventListener('DOMContentLoaded', function () {
-    var saved = localStorage.getItem('profileImage');
+    var saved = localStorage.getItem('profileImage_' + email);
     var img = document.getElementById('nav-profile-img');
     if (saved && img) img.src = saved;
     updateMetricCards();
@@ -77,6 +77,7 @@ function parseCSV(text) {
     });
 
     // Save metrics for dashboard cards
+    var email = localStorage.getItem('user_email') || '';
     var productIdIdx = parsedHeaders.findIndex(function (h) {
         return h.toLowerCase().replace(/\s/g, '') === 'productid';
     });
@@ -84,32 +85,39 @@ function parseCSV(text) {
     if (productIdIdx !== -1) {
         uniqueMotors = new Set(parsedRows.map(function (r) { return r[productIdIdx]; })).size;
     }
-    var prevTotal = parseInt(localStorage.getItem('dash_total_rows') || '0');
-    localStorage.setItem('dash_total_rows', prevTotal + parsedRows.length);
-    localStorage.setItem('dash_unique_motors', uniqueMotors);
-    localStorage.setItem('dash_last_upload', new Date().toLocaleString());
+    var prevTotal = parseInt(localStorage.getItem('dash_total_rows_' + email) || '0');
+    localStorage.setItem('dash_total_rows_' + email, prevTotal + parsedRows.length);
+    localStorage.setItem('dash_unique_motors_' + email, uniqueMotors);
+    localStorage.setItem('dash_last_upload_' + email, new Date().toLocaleString());
     updateMetricCards();
 }
 
 // ── Update metric cards from localStorage ──
 function updateMetricCards() {
+    var email = localStorage.getItem('user_email') || '';
     var totalEl   = document.querySelector('.metric-card:nth-child(1) .metric-value');
     var motorsEl  = document.querySelector('.metric-card:nth-child(2) .metric-value');
     var alertsEl  = document.querySelector('.metric-card:nth-child(3) .metric-value');
     var uptimeEl  = document.querySelector('.metric-card:nth-child(4) .metric-value');
     var uptimeSubEl = document.querySelector('.metric-card:nth-child(4) .metric-sub');
 
-    var total   = localStorage.getItem('dash_total_rows');
-    var motors  = localStorage.getItem('dash_unique_motors');
-    var alerts  = localStorage.getItem('dash_critical_alerts');
-    var lastUpload = localStorage.getItem('dash_last_upload');
+    var total   = localStorage.getItem('dash_total_rows_' + email);
+    var motors  = localStorage.getItem('dash_unique_motors_' + email);
+    var alerts  = localStorage.getItem('dash_critical_alerts_' + email);
+    var lastUpload = localStorage.getItem('dash_last_upload_' + email);
 
     if (totalEl  && total)   totalEl.textContent  = parseInt(total).toLocaleString();
+    else if (totalEl) totalEl.textContent = '0';
     if (motorsEl && motors)  motorsEl.textContent = parseInt(motors).toLocaleString();
+    else if (motorsEl) motorsEl.textContent = '0';
     if (alertsEl && alerts)  alertsEl.textContent = alerts;
+    else if (alertsEl) alertsEl.textContent = '0';
+    
     if (uptimeEl && lastUpload) {
         uptimeEl.textContent = lastUpload.split(',')[0];
         if (uptimeSubEl) uptimeSubEl.textContent = 'Last upload date';
+    } else if (uptimeEl) {
+        uptimeEl.textContent = '—';
     }
 }
 
@@ -286,10 +294,10 @@ function hideLogoutPopup() {
     document.getElementById('logout-overlay').classList.remove('show');
 }
 function performLogout() {
-    const isDark = localStorage.getItem('darkMode');
-    localStorage.clear();
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_email');
+    localStorage.removeItem('role');
     sessionStorage.clear();
-    if (isDark) localStorage.setItem('darkMode', isDark);
     window.location.href = 'login.html';
 }
 window.addEventListener('DOMContentLoaded', function () {

@@ -1,12 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
     // ── Load saved profile photo from localStorage immediately ──
-    const savedAvatar = localStorage.getItem('profileImage');
+    const userEmail = localStorage.getItem('user_email') || '';
+    const savedAvatar = localStorage.getItem('profileImage_' + userEmail);
     if (savedAvatar) {
         const mainImg = document.getElementById('main-profile-img');
         if (mainImg) mainImg.src = savedAvatar;
     }
-
-    const userEmail = localStorage.getItem('user_email');
 
     if (userEmail) {
         fetch(`${CONFIG.API_BASE_URL}/api/profile?email=${encodeURIComponent(userEmail)}`)
@@ -53,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const mainProfileImg = document.getElementById('main-profile-img');
                         if (mainProfileImg) mainProfileImg.src = data.avatar;
                         // Sync to localStorage so all other pages (dashboard, analyse) update
-                        localStorage.setItem('profileImage', data.avatar);
+                        localStorage.setItem('profileImage_' + userEmail, data.avatar);
                     }
                 }
             })
@@ -89,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (mainProfileImg) mainProfileImg.src = base64Avatar;
 
                     // Save to localStorage so ALL pages (dashboard, analyse) sync instantly
-                    localStorage.setItem('profileImage', base64Avatar);
+                    localStorage.setItem('profileImage_' + currentEmail, base64Avatar);
 
                     // Show confirmation toast
                     showProfileToast('Profile photo updated! Changes are reflected everywhere.');
@@ -210,10 +209,10 @@ function hideLogoutPopup() {
 }
 
 function performLogout() {
-    const isDark = localStorage.getItem('darkMode');
-    localStorage.clear();
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_email');
+    localStorage.removeItem('role');
     sessionStorage.clear();
-    if (isDark) localStorage.setItem('darkMode', isDark);
     window.location.href = 'login.html';
 }
 
