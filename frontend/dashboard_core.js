@@ -285,8 +285,10 @@ function hideLogoutPopup() {
     document.getElementById('logout-overlay').classList.remove('show');
 }
 function performLogout() {
-    localStorage.removeItem('user_email');
-    localStorage.removeItem('role');
+    const isDark = localStorage.getItem('darkMode');
+    localStorage.clear();
+    sessionStorage.clear();
+    if (isDark) localStorage.setItem('darkMode', isDark);
     window.location.href = 'login.html';
 }
 window.addEventListener('DOMContentLoaded', function () {

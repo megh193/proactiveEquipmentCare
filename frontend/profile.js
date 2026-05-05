@@ -202,8 +202,10 @@ function hideLogoutPopup() {
 }
 
 function performLogout() {
-    localStorage.removeItem('user_email');
-    localStorage.removeItem('role');
+    const isDark = localStorage.getItem('darkMode');
+    localStorage.clear();
+    sessionStorage.clear();
+    if (isDark) localStorage.setItem('darkMode', isDark);
     window.location.href = 'login.html';
 }
 
