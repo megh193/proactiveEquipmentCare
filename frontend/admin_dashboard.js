@@ -190,6 +190,19 @@ function updateMetricsFromSingle(prob) {
     }
 
     // Update last upload/run date
-    localStorage.setItem('dash_last_upload_' + email, new Date().toLocaleString());
+    var newLastUpload = new Date().toLocaleString();
+    localStorage.setItem('dash_last_upload_' + email, newLastUpload);
     updateMetricCards();
+
+    // Persist to backend
+    fetch(`${CONFIG.API_BASE_URL}/api/metrics`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            total_rows: prev + 1,
+            unique_motors: parseInt(localStorage.getItem('dash_unique_motors_' + email) || '0'),
+            critical_alerts: parseInt(localStorage.getItem('dash_critical_alerts_' + email) || '0'),
+            last_upload: newLastUpload
+        })
+    }).catch(err => console.error("Failed to sync metrics", err));
 }

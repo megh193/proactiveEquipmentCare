@@ -5,12 +5,28 @@
     if (!email || !token) window.location.href = 'login.html';
 })();
 
-// ── Profile image ──
+// ── Profile image and Metrics ──
 window.addEventListener('DOMContentLoaded', function () {
+    var email = localStorage.getItem('user_email') || '';
     var saved = localStorage.getItem('profileImage_' + email);
     var img = document.getElementById('nav-profile-img');
     if (saved && img) img.src = saved;
-    updateMetricCards();
+    
+    // Fetch metrics from backend
+    fetch(`${CONFIG.API_BASE_URL}/api/metrics`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success && data.metrics) {
+                localStorage.setItem('dash_total_rows_' + email, data.metrics.total_rows || 0);
+                localStorage.setItem('dash_unique_motors_' + email, data.metrics.unique_motors || 0);
+                localStorage.setItem('dash_critical_alerts_' + email, data.metrics.critical_alerts || 0);
+                if (data.metrics.last_upload) {
+                    localStorage.setItem('dash_last_upload_' + email, data.metrics.last_upload);
+                }
+                updateMetricCards();
+            }
+        })
+        .catch(() => updateMetricCards()); // Fallback to local storage if offline
 });
 
 // ── State ──
@@ -86,10 +102,25 @@ function parseCSV(text) {
         uniqueMotors = new Set(parsedRows.map(function (r) { return r[productIdIdx]; })).size;
     }
     var prevTotal = parseInt(localStorage.getItem('dash_total_rows_' + email) || '0');
-    localStorage.setItem('dash_total_rows_' + email, prevTotal + parsedRows.length);
+    var newTotal = prevTotal + parsedRows.length;
+    var newLastUpload = new Date().toLocaleString();
+
+    localStorage.setItem('dash_total_rows_' + email, newTotal);
     localStorage.setItem('dash_unique_motors_' + email, uniqueMotors);
-    localStorage.setItem('dash_last_upload_' + email, new Date().toLocaleString());
+    localStorage.setItem('dash_last_upload_' + email, newLastUpload);
     updateMetricCards();
+
+    // Persist to backend
+    fetch(`${CONFIG.API_BASE_URL}/api/metrics`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            total_rows: newTotal,
+            unique_motors: uniqueMotors,
+            critical_alerts: parseInt(localStorage.getItem('dash_critical_alerts_' + email) || '0'),
+            last_upload: newLastUpload
+        })
+    }).catch(err => console.error("Failed to sync metrics", err));
 }
 
 // ── Update metric cards from localStorage ──

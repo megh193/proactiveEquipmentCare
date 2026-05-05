@@ -57,7 +57,20 @@ window.addEventListener('DOMContentLoaded', async() => {
         localStorage.setItem('dash_critical_alerts_' + email, prevAlerts + criticalCount);
         
         var prevTotalRows = parseInt(localStorage.getItem('dash_total_rows_' + email) || '0');
-        localStorage.setItem('dash_total_rows_' + email, prevTotalRows + predictionData.length);
+        var newTotalRows = prevTotalRows + predictionData.length;
+        localStorage.setItem('dash_total_rows_' + email, newTotalRows);
+
+        // Persist to backend
+        fetch(`${CONFIG.API_BASE_URL}/api/metrics`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                total_rows: newTotalRows,
+                unique_motors: parseInt(localStorage.getItem('dash_unique_motors_' + email) || '0'),
+                critical_alerts: prevAlerts + criticalCount,
+                last_upload: localStorage.getItem('dash_last_upload_' + email)
+            })
+        }).catch(err => console.error("Failed to sync metrics", err));
 
         renderAll(result.total_rows, filename);
 

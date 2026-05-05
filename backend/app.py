@@ -714,6 +714,48 @@ def predict():
         print(f"Prediction error: {type(e).__name__}: {e}\n{tb}")
         return jsonify({"success": False, "message": f"Prediction error: {str(e)}"}), 500
 
+# ── User Metrics Endpoints ───────────────────────────────────────────────────
+
+@app.route('/api/metrics', methods=['GET', 'POST'])
+@token_required
+def user_metrics_route():
+    from supabase_client import supabase as _sb
+    email = request.user_data.get('email')
+    metrics_table = os.getenv('USER_METRICES_TABLE', 'user_metrics')
+
+    if not email:
+        return jsonify({"success": False, "message": "Email not found in token"}), 400
+
+    if request.method == 'GET':
+        try:
+            resp = _sb.table(metrics_table).select("*").eq("email", email).execute()
+            if resp.data:
+                return jsonify({"success": True, "metrics": resp.data[0]})
+            else:
+                return jsonify({"success": True, "metrics": {
+                    "total_rows": 0,
+                    "unique_motors": 0,
+                    "critical_alerts": 0,
+                    "last_upload": None
+                }})
+        except Exception as e:
+            return jsonify({"success": False, "message": str(e)}), 500
+
+    elif request.method == 'POST':
+        try:
+            data = request.json
+            update_data = {
+                "email": email,
+                "total_rows": data.get('total_rows', 0),
+                "unique_motors": data.get('unique_motors', 0),
+                "critical_alerts": data.get('critical_alerts', 0),
+                "last_upload": data.get('last_upload')
+            }
+            resp = _sb.table(metrics_table).upsert(update_data).execute()
+            return jsonify({"success": True, "metrics": resp.data[0] if resp.data else {}})
+        except Exception as e:
+            return jsonify({"success": False, "message": str(e)}), 500
+
 
 # ── Audit Trail Endpoints (Super Admin) ──────────────────────────────────────
 
