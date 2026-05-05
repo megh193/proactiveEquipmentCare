@@ -52,6 +52,9 @@ document.getElementById('signupForm').addEventListener('submit', async function 
     } else if (passVal.length < 8) {
         showError(passEl, document.getElementById('signupPasswordError'), 'Password must be at least 8 characters');
         isValid = false;
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}/.test(passVal)) {
+        showError(passEl, document.getElementById('signupPasswordError'), 'Password must contain uppercase, lowercase, number, and symbol');
+        isValid = false;
     }
     if (!confirmVal) {
         showError(confirmEl, document.getElementById('signupConfirmError'), 'Please confirm your password');
@@ -195,7 +198,7 @@ document.getElementById('verifyOtpBtn').addEventListener('click', async function
         });
         const data = await response.json();
         if (response.ok) {
-            loginSuccess(data.email || email, data.role);
+            loginSuccess(data.email || email, data.role, data.token);
         } else {
             showErrorPopup(data.message || "Incorrect OTP");
             verifyBtn.disabled = false;
@@ -208,12 +211,13 @@ document.getElementById('verifyOtpBtn').addEventListener('click', async function
     }
 });
 
-function loginSuccess(emailVal, roleVal) {
+function loginSuccess(emailVal, roleVal, tokenVal) {
     // Default to admin if role wasn't explicitly returned
     let role = roleVal || 'admin';
 
     localStorage.setItem('user_email', emailVal);
     localStorage.setItem('role', role);
+    if (tokenVal) localStorage.setItem('auth_token', tokenVal);
 
     loadDashboard(role);
 }

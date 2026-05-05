@@ -4,7 +4,7 @@
    All UI updates are instant (no page reload needed)
  ========================================================= */
 
-const API = 'http://127.0.0.1:5000';
+const API = typeof CONFIG !== 'undefined' ? CONFIG.API_BASE_URL : 'http://127.0.0.1:5000';
 
 // ── Initialisation ──────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -142,7 +142,8 @@ async function handleAddUser(e) {
     if (!email)    { showFieldError('err-email',    'Email is required');                valid = false; }
     else if (!isValidEmail(email)) { showFieldError('err-email', 'Invalid email address'); valid = false; }
     if (!password) { showFieldError('err-password', 'Password is required');             valid = false; }
-    else if (password.length < 6) { showFieldError('err-password', 'Min. 6 characters'); valid = false; }
+    else if (password.length < 8) { showFieldError('err-password', 'Min. 8 characters'); valid = false; }
+    else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}/.test(password)) { showFieldError('err-password', 'Needs uppercase, lowercase, number, symbol'); valid = false; }
     if (!role)     { showFieldError('err-role',     'Please select a role');             valid = false; }
 
     if (!valid) return;

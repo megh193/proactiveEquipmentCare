@@ -167,7 +167,8 @@ function submitPasswordChange() {
 
     if (!otp || !newPw || !confirmPw) { errEl.textContent = 'All fields are required.'; return; }
     if (newPw !== confirmPw) { errEl.textContent = 'Passwords do not match.'; return; }
-    if (newPw.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; return; }
+    if (newPw.length < 8) { errEl.textContent = 'Password must be at least 8 characters.'; return; }
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}/.test(newPw)) { errEl.textContent = 'Password must contain uppercase, lowercase, number, and symbol.'; return; }
 
     fetch(`${CONFIG.API_BASE_URL}/api/change-password/verify`, {
         method: 'POST',

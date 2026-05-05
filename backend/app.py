@@ -13,11 +13,48 @@ from flask_cors import CORS
 import bcrypt
 from auth_service import authenticate_user, log_login, generate_otp, send_otp_email, store_otp, verify_otp
 from dotenv import load_dotenv
+import jwt
+from functools import wraps
+import re
+from datetime import datetime, timezone, timedelta
 
 load_dotenv(override=True)
 
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 CORS(app)
+
+app.config['SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'proactive_super_secret_key')
+
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        if 'Authorization' in request.headers:
+            parts = request.headers['Authorization'].split()
+            if len(parts) == 2 and parts[0] == 'Bearer':
+                token = parts[1]
+        
+        if not token:
+            return jsonify({'success': False, 'message': 'Token is missing!'}), 401
+        
+        try:
+            data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+            request.user_data = data
+        except jwt.ExpiredSignatureError:
+            return jsonify({'success': False, 'message': 'Token has expired!'}), 401
+        except Exception as e:
+            return jsonify({'success': False, 'message': 'Token is invalid!'}), 401
+            
+        return f(*args, **kwargs)
+    return decorated
+
+def check_password_complexity(password):
+    if len(password) < 8: return False, "Password must be at least 8 characters"
+    if not re.search(r"[A-Z]", password): return False, "Password must contain at least one uppercase letter"
+    if not re.search(r"[a-z]", password): return False, "Password must contain at least one lowercase letter"
+    if not re.search(r"[0-9]", password): return False, "Password must contain at least one number"
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password): return False, "Password must contain at least one special character"
+    return True, ""
 
 # Allow large CSV uploads (up to 100 MB)
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
@@ -112,8 +149,14 @@ def verify_otp_route():
     
     if is_valid:
         log_login(email, ip_address, status="Success")
+        
+        token = jwt.encode({
+            'email': email,
+            'role': role,
+            'exp': datetime.now(timezone.utc) + timedelta(hours=24)
+        }, app.config['SECRET_KEY'], algorithm="HS256")
             
-        return jsonify({"success": True, "message": "Login successful", "email": email, "role": role})
+        return jsonify({"success": True, "message": "Login successful", "email": email, "role": role, "token": token})
     else:
         # Optional: Log failed OTP attempt?
         # log_login(email, ip_address, status="Failed OTP") 
@@ -129,8 +172,9 @@ def signup():
     if not name or not email or not password:
         return jsonify({"success": False, "message": "Name, email, and password are required"}), 400
 
-    if len(password) < 8:
-        return jsonify({"success": False, "message": "Password must be at least 8 characters"}), 400
+    is_complex, msg = check_password_complexity(password)
+    if not is_complex:
+        return jsonify({"success": False, "message": msg}), 400
 
     user_table = os.getenv("SUPABASE_USER_TABLE_NAME", "users_database")
 
@@ -213,6 +257,7 @@ from supabase_client import supabase
 
 # User Management Endpoints (Super Admin)
 @app.route('/api/users', methods=['GET'])
+@token_required
 def get_users():
     try:
         table_name = os.getenv("SUPABASE_USER_TABLE_NAME", "users_database")
@@ -226,34 +271,27 @@ def get_users():
         return jsonify({"success": False, "message": str(e)}), 500
 
 @app.route('/api/users', methods=['POST'])
+@token_required
 def add_user():
     data = request.json
     name          = data.get('name')
     email         = data.get('email')
     password      = data.get('password')
     role          = data.get('role', 'admin')
-    requester_email = data.get('requester_email')   # sent by the frontend
 
     if not name or not email or not password:
         return jsonify({"success": False, "message": "Name, email, and password are required"}), 400
 
-    # ── Super-admin enforcement ───────────────────────────────────────────────
-    # Verify the requesting user is a super_admin in the database.
-    user_table = os.getenv("SUPABASE_USER_TABLE_NAME", "users_database")
-    if requester_email:
-        try:
-            req_res = supabase.table(user_table).select("Role").eq("email", requester_email).execute()
-            if not req_res.data:
-                return jsonify({"success": False, "message": "Requester not found. Access denied."}), 403
-            req_role = (req_res.data[0].get("Role") or "").lower().replace(" ", "_")
-            if req_role != "super_admin":
-                return jsonify({"success": False, "message": "Only Super Admins can create users."}), 403
-        except Exception as role_e:
-            print(f"Role check error: {role_e}")
-            return jsonify({"success": False, "message": "Could not verify requester role."}), 500
-    # (If requester_email not sent, allow through — frontend guards it)
+    is_complex, msg = check_password_complexity(password)
+    if not is_complex:
+        return jsonify({"success": False, "message": msg}), 400
 
-    # ── Step 1: Create/update user in Supabase Auth via REST (service key) ───
+    # ── Super-admin enforcement ───────────────────────────────────────────────
+    req_role = request.user_data.get('role', '')
+    if req_role != "super_admin":
+        return jsonify({"success": False, "message": "Only Super Admins can create users."}), 403
+
+    user_table = os.getenv("SUPABASE_USER_TABLE_NAME", "users_database")
     import requests as _req
     supa_url = os.getenv("SUPABASE_URL")
     svc_key  = os.getenv("SUPABASE_SERVICE_KEY")
@@ -334,6 +372,7 @@ def add_user():
         return jsonify({"success": False, "message": str(e)}), 500
 
 @app.route('/api/users/<user_id>', methods=['PUT'])
+@token_required
 def update_user(user_id):
     data = request.json
     update_data = {}
@@ -360,6 +399,7 @@ def update_user(user_id):
         return jsonify({"success": False, "message": str(e)}), 500
 
 @app.route('/api/users/<user_id>', methods=['DELETE'])
+@token_required
 def delete_user(user_id):
     try:
         table_name = os.getenv("SUPABASE_USER_TABLE_NAME", "users_database")
@@ -429,6 +469,7 @@ def save_profiles(profiles):
         json.dump(profiles, f)
 
 @app.route('/api/profile', methods=['GET'])
+@token_required
 def get_profile():
     email = request.args.get('email')
     if not email:
@@ -462,6 +503,7 @@ def get_profile():
         return jsonify({"success": False, "message": str(e)}), 500
 
 @app.route('/api/change-password/request-otp', methods=['POST'])
+@token_required
 def change_password_request_otp():
     data = request.json
     email = data.get('email')
@@ -483,6 +525,7 @@ def change_password_request_otp():
 
 
 @app.route('/api/change-password/verify', methods=['POST'])
+@token_required
 def change_password_verify():
     data = request.json
     email = data.get('email')
@@ -491,6 +534,10 @@ def change_password_verify():
 
     if not email or not otp or not new_password:
         return jsonify({"success": False, "message": "Email, OTP, and new password are required"}), 400
+
+    is_complex, msg = check_password_complexity(new_password)
+    if not is_complex:
+        return jsonify({"success": False, "message": msg}), 400
 
     is_valid, message = verify_otp(email, otp)
     if not is_valid:
@@ -510,6 +557,7 @@ def change_password_verify():
 
 
 @app.route('/api/profile/avatar', methods=['POST'])
+@token_required
 def update_avatar():
     data = request.json
     email = data.get('email')
@@ -530,6 +578,7 @@ def update_avatar():
         return jsonify({"success": False, "message": str(e)}), 500
 
 @app.route('/predict', methods=['POST'])
+@token_required
 def predict():
     if 'file' not in request.files:
         return jsonify({"success": False, "message": "No file uploaded"}), 400
@@ -669,6 +718,7 @@ def predict():
 # ── Audit Trail Endpoints (Super Admin) ──────────────────────────────────────
 
 @app.route('/api/audit-logs', methods=['POST'])
+@token_required
 def log_prediction_audit():
     """Log a prediction run: who ran it, when, on what CSV."""
     data = request.json
@@ -692,6 +742,7 @@ def log_prediction_audit():
 
 
 @app.route('/api/audit-logs', methods=['GET'])
+@token_required
 def get_audit_logs():
     """Return all prediction audit logs (super admin only)."""
     try:
@@ -703,6 +754,7 @@ def get_audit_logs():
 
 
 @app.route('/api/login-logs', methods=['GET'])
+@token_required
 def get_login_logs():
     """Return all login logs (super admin only)."""
     try:
@@ -714,6 +766,7 @@ def get_login_logs():
 
 
 @app.route('/api/predict-single', methods=['POST'])
+@token_required
 def predict_single():
     """Predict failure probability for a single motor given 5 sensor readings."""
     data = request.json
