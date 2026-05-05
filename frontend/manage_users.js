@@ -11,7 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Auth guard: must be super_admin
     const email = localStorage.getItem('user_email');
     const role  = localStorage.getItem('role');
-    if (!email || role !== 'super_admin') {
+    const token = localStorage.getItem('auth_token');
+    if (!email || !token || role !== 'super_admin') {
         window.location.href = 'login.html';
         return;
     }

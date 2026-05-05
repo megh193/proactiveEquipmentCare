@@ -1,7 +1,8 @@
 // Role guard — redirect super_admins to their own dashboard
 document.addEventListener('DOMContentLoaded', function () {
     var role = localStorage.getItem('role');
-    if (!role) {
+    var token = localStorage.getItem('auth_token');
+    if (!role || !token) {
         window.location.href = 'login.html';
         return;
     }

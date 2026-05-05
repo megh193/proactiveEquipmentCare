@@ -1,7 +1,8 @@
 // ── Auth guard ──
 (function () {
     const email = localStorage.getItem('user_email');
-    if (!email) window.location.href = 'login.html';
+    const token = localStorage.getItem('auth_token');
+    if (!email || !token) window.location.href = 'login.html';
 })();
 
 // ── Profile image ──

@@ -1,6 +1,7 @@
 // ── Auth guard ──
 const userEmail = localStorage.getItem('user_email');
-if (!userEmail) window.location.href = 'login.html';
+const token = localStorage.getItem('auth_token');
+if (!userEmail || !token) window.location.href = 'login.html';
 
 // ── Profile image ──
 const savedImg = localStorage.getItem('profileImage');
