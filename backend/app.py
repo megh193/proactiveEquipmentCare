@@ -1,6 +1,8 @@
 import os
 import sys
 import io
+import uuid
+import hashlib
 import asyncio
 import numpy as np
 import pandas as pd
@@ -25,6 +27,21 @@ CORS(app)
 
 app.config['SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'proactive_super_secret_key')
 
+# In-memory token blacklist — stores revoked JWT IDs (jti) after logout.
+# No database table needed. Cleared on server restart (acceptable since
+# all tokens expire in 24 h anyway).
+_token_blacklist = set()
+
+def get_token_fingerprint(req):
+    """Create a SHA-256 hash of (client IP + User-Agent) to bind a token to a device.
+    Handles Nginx/proxy setups (AWS EC2) via X-Forwarded-For header."""
+    ip = req.headers.get('X-Forwarded-For', req.remote_addr or '')
+    if ip and ',' in ip:
+        ip = ip.split(',')[0].strip()
+    user_agent = req.headers.get('User-Agent', '')
+    raw = f"{ip}|{user_agent}"
+    return hashlib.sha256(raw.encode()).hexdigest()
+
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -42,9 +59,30 @@ def token_required(f):
             request.user_data = data
         except jwt.ExpiredSignatureError:
             return jsonify({'success': False, 'message': 'Token has expired!'}), 401
-        except Exception as e:
+        except Exception:
             return jsonify({'success': False, 'message': 'Token is invalid!'}), 401
-            
+
+        # ── Anti-Hijacking Layer 1: Token Blacklist Check (in-memory) ────────
+        jti = data.get('jti')
+        if jti and jti in _token_blacklist:
+            return jsonify({
+                'success': False,
+                'message': 'Session has been terminated. Please log in again.',
+                'reason': 'token_revoked'
+            }), 401
+
+        # ── Anti-Hijacking Layer 2: Device Fingerprint Check ──────────────────
+        stored_fp = data.get('fingerprint')
+        if stored_fp:
+            current_fp = get_token_fingerprint(request)
+            if current_fp != stored_fp:
+                print(f"[Security] Fingerprint mismatch for {data.get('email')} — possible session hijack!")
+                return jsonify({
+                    'success': False,
+                    'message': 'Session security violation detected. Please log in again.',
+                    'reason': 'session_hijack'
+                }), 401
+
         return f(*args, **kwargs)
     return decorated
 
@@ -153,9 +191,11 @@ def verify_otp_route():
         token = jwt.encode({
             'email': email,
             'role': role,
+            'jti': str(uuid.uuid4()),
+            'fingerprint': get_token_fingerprint(request),
             'exp': datetime.now(timezone.utc) + timedelta(hours=24)
         }, app.config['SECRET_KEY'], algorithm="HS256")
-            
+
         return jsonify({"success": True, "message": "Login successful", "email": email, "role": role, "token": token})
     else:
         # Optional: Log failed OTP attempt?
@@ -239,6 +279,21 @@ def signup():
 
 @app.route('/api/logout', methods=['POST'])
 def logout_route():
+    # ── Blacklist the token so it cannot be reused after logout ──────────────
+    auth_header = request.headers.get('Authorization', '')
+    if auth_header.startswith('Bearer '):
+        raw_token = auth_header.split(' ', 1)[1]
+        try:
+            token_data = jwt.decode(raw_token, app.config['SECRET_KEY'], algorithms=["HS256"])
+            jti   = token_data.get('jti')
+            t_exp = token_data.get('exp')
+            t_email = token_data.get('email', '')
+            if jti:
+                _token_blacklist.add(jti)
+                print(f"[Logout] Token {jti} blacklisted in-memory for {t_email}")
+        except Exception as e:
+            print(f"[Logout] Could not blacklist token: {e}")
+
     if request.is_json:
         data = request.json
     else:
@@ -247,7 +302,7 @@ def logout_route():
             data = json.loads(request.data)
         except Exception:
             data = {}
-            
+
     email = data.get('email')
     if email:
         return jsonify({"success": True})

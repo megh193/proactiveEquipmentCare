@@ -1,3 +1,14 @@
+// ── Session Hijacking Alert ─────────────────────────────────────────────────
+// If the user was force-logged-out due to a detected session hijack or token
+// revocation, show a warning message on the login page.
+window.addEventListener('DOMContentLoaded', function () {
+    const alert = sessionStorage.getItem('security_alert');
+    if (alert) {
+        sessionStorage.removeItem('security_alert');
+        setTimeout(function () { showErrorPopup(alert); }, 400);
+    }
+});
+
 let currentMode = 'signin'; // 'signin' | 'signup'
 
 // ── Tab switching ──────────────────────────────────────────
